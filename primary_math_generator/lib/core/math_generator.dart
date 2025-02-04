@@ -38,7 +38,7 @@ class MathGenerator {
       attempts++;
       final operator = _getRandomOperator(operators);
       if (operator == null) continue;
-      final problem = _generateProblem(operator!);
+      final problem = _generateProblem(operator);
 
       if (problem != null && _generatedProblems.add(problem.equation)) {
         problems.add(problem);

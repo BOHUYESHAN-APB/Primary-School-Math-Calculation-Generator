@@ -33,7 +33,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   bool _allowDecimals = false;
   bool _allowNegatives = false;
   bool _showAnswers = false;
-  Set<String> _selectedOperators = {'+', '-'};
+  final Set<String> _selectedOperators = {'+', '-'};
   List<MathProblem> _problems = [];
   final pdf = pw.Document();
 
