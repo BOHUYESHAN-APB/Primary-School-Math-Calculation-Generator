@@ -1,5 +1,3 @@
-
-
 import 'dart:math';
 
 class MathProblem {
@@ -19,7 +17,6 @@ class MathProblem {
     required this.verticalFormat,
   });
 }
-
 class _Numbers {
   final dynamic num1;
   final dynamic num2;
@@ -35,12 +32,11 @@ class MathGenerator {
     bool allowDecimals = false,
     int maxDigits = 6
   }) {
-    List<MathProblem> problems = [];
+    final problems = <MathProblem>[];
     _problemSet.clear();
 
-    int min = 10;
-    int max = pow(10, maxDigits).toInt();
-    max = max > 10000 ? 10000 : max;
+    final min = 10;
+    final max = (pow(10, maxDigits).toInt()).clamp(10, 10000);
 
     while (problems.length < count) {
       String operator = operators.elementAt(_random.nextInt(operators.length));
@@ -117,9 +113,9 @@ class MathGenerator {
   }
 
   String _createProblemHash(dynamic num1, dynamic num2, String operator) {
-    // 处理可交换运算符的重复问题（如加法和乘法）
+    // Handle commutative operators (addition and multiplication)
     if (operator == '+' || operator == '×') {
-      final sorted = [num1, num2]..sort();
+      final sorted = [num1.toString(), num2.toString()]..sort();
       return "${sorted[0]}${operator}${sorted[1]}";
     }
     return "$num1$operator$num2";
@@ -267,18 +263,79 @@ class MathGenerator {
     bool allowDecimals = false,
     int maxDigits = 6
   }) {
-    List<MathProblem> problems = [];
+    final problems = <MathProblem>[];
     _problemSet.clear();
 
-    int min = 10;
-    int max = pow(10, maxDigits).toInt();
-      max = max > 10000 ? 10000 : max;
+    final min = 10;
+    final max = (pow(10, maxDigits).toInt()).clamp(10, 10000);
 
     while (problems.length < count) {
-      String operator = operators.elementAt(_random.nextInt(operators.length));
+      final operator = operators.elementAt(_random.nextInt(operators.length));
       var nums = _generateNumbers(operator, min, max, allowNegatives, allowDecimals);
       
-      // 应用增强的查重逻辑
+      // 增强的查重逻辑（处理可交换运算符）
+      String problemHash = _createProblemHash(nums.num1, nums.num2, operator);
+      if (_problemSet.contains(problemHash)) continue;
+
+      _problemSet.add(problemHash);
+      problems.add(MathProblem(
+        num1: nums.num1,
+        num2: nums.num2,
+        operator: operator,
+        question: _buildQuestion(nums.num1, nums.num2, operator, allowDecimals),
+        answer: _calculateAnswer(nums.num1, nums.num2, operator, allowDecimals),
+        verticalFormat: _buildVerticalFormat(nums.num1, nums.num2, operator),
+      ));
+    }
+    return problems;
+  }
+
+  String _createProblemHash(dynamic num1, dynamic num2, String operator) {
+    // 处理可交换运算符（加法和乘法）
+    if (operator == '+' || operator == '×') {
+      List<String> numbers = [num1.toString(), num2.toString()]..sort();
+      return "${numbers[0]}${operator}${numbers[1]}";
+    }
+    return "$num1$operator$num2";
+  }
+
+  _Numbers _generateNumbers(String operator, int min, int max, bool allowNegatives, bool allowDecimals) {
+    dynamic num1 = _random.nextInt(max - min + 1) + min;
+    dynamic num2 = _random.nextInt(max - min + 1) + min;
+
+    if (allowDecimals) {
+      num1 = (num1 + _random.nextDouble()).toStringAsFixed(2);
+      num2 = (num2 + _random.nextDouble()).toStringAsFixed(2);
+    }
+
+    // 处理减法负数问题
+    if (operator == '-' && !allowNegatives && num1 < num2) {
+      var temp = num1;
+      num1 = num2;
+      num2 = temp;
+    }
+
+    // 处理除法分母为零问题
+    if (operator == '÷' && num2 == 0) {
+      num2 = _random.nextInt(max - min + 1) + 1;
+    }
+
+    return _Numbers(num1, num2);
+  }
+
+  String _buildVerticalFormat(dynamic num1, dynamic num2, String operator) {
+    final opSymbol = _getOperatorSymbol(operator);
+    final maxWidth = num1.toString().length > num2.toString().length
+        ? num1.toString().length
+        : num2.toString().length;
+    return '''
+${' ' * (maxWidth + 2)}$num1
+$opSymbol${' ' * (maxWidth + 1)}$num2
+${'─' * (maxWidth + 2)}''';
+  }
+      var nums = _generateNumbers(operator, min, max, allowNegatives, allowDecimals);
+      
+      // Enhanced duplicate checking logic
       String problemHash = _createProblemHash(nums.num1, nums.num2, operator);
       if (_problemSet.contains(problemHash)) continue;
 
