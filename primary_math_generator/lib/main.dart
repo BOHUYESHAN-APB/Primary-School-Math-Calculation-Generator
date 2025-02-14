@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -12,7 +14,7 @@ class MathGeneratorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '小学数学题生成器',
+      title: 'Math Problem Generator',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const GeneratorScreen(),
     );
@@ -48,7 +50,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('数学题生成器'),
+        title: const Text('Math Problem Generator'),
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
@@ -63,26 +65,26 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildNumberInput('计算位数（1-6）', _digitCount, (value) {
+              _buildNumberInput('Number of Digits (1-6)', _digitCount, (value) {
                 _digitCount = int.parse(value);
               }),
-              _buildNumberInput('题目数量', _problemCount, (value) {
+              _buildNumberInput('Number of Problems', _problemCount, (value) {
                 _problemCount = int.parse(value);
               }),
               _buildOperatorSelector(),
-              _buildSwitch('允许小数', _allowDecimals, (value) {
+              _buildSwitch('Allow Decimals', _allowDecimals, (value) {
                 setState(() => _allowDecimals = value);
               }),
-              _buildSwitch('允许负数', _allowNegatives, (value) {
+              _buildSwitch('Allow Negatives', _allowNegatives, (value) {
                 setState(() => _allowNegatives = value);
               }),
-              _buildSwitch('显示答案', _showAnswers, (value) {
+              _buildSwitch('Show Answers', _showAnswers, (value) {
                 setState(() => _showAnswers = value);
               }),
               Center(
                 child: ElevatedButton(
                   onPressed: _generateProblems,
-                  child: const Text('生成题目'),
+                  child: const Text('Generate Problems'),
                 ),
               ),
               const SizedBox(height: 20),
@@ -147,13 +149,20 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   void _generateProblems() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      final generator = MathGenerator(
-        maxDigits: _digitCount,
-        allowDecimals: _allowDecimals,
-        allowNegatives: _allowNegatives,
-      );
+      final generator = MathGenerator();
       setState(() {
-        _problems = generator.generateProblems(_problemCount, _selectedOperators);
+        _problems = generator.generateProblems(
+          count: _problemCount,
+          operations: _selectedOperators
+              .map((op) => OperationType.fromSymbol(op))
+              .toSet(),
+          constraints: GenerationConstraints(
+            minValue: 10,
+            maxValue: pow(10, _digitCount).toInt(),
+            allowDecimals: _allowDecimals,
+            allowNegatives: _allowNegatives,
+          ),
+        );
       });
     }
   }
@@ -165,10 +174,11 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(problem.question, style: const TextStyle(fontSize: 18)),
+            Text(problem.formattedQuestion,
+                style: const TextStyle(fontSize: 18)),
             if (_showAnswers)
-              Text('答案：${problem.answer}', 
-                   style: TextStyle(color: Colors.green[700])),
+              Text('答案：${problem.formattedAnswer}',
+                  style: TextStyle(color: Colors.green[700])),
           ],
         ),
       );
@@ -176,5 +186,40 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   }
 
   Future<void> _generatePdf() async {
+    final pdf = pw.Document();
     pdf.addPage(
       pw.Page(
+        build: (pw.Context context) => pw.Column(
+          children: [
+            pw.Header(level: 0, text: '数学题生成结果'),
+            pw.ListView.builder(
+              itemCount: _problems.length,
+              itemBuilder: (context, index) {
+                return pw.Column(
+                  children: [
+                    pw.Text(_problems[index].formattedQuestion),
+                    if (_showAnswers)
+                      pw.Text('答案：${_problems[index].formattedAnswer}'),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/math_problems.pdf');
+      await file.writeAsBytes(await pdf.save());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF已保存至: ${file.path}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF生成失败')),
+      );
+    }
+  }
+}

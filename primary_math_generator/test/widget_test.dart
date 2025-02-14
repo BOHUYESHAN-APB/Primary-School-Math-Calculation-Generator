@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:primary_math_generator/main.dart';
+import 'package:primary_math_generator/core/math_generator.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App launches and shows generator screen',
+      (WidgetTester tester) async {
+    // Load app widget
+    await tester.pumpWidget(const MathGeneratorApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Wait for initial frame
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify core elements exist
+    expect(find.text('Math Problem Generator'), findsOneWidget);
+    expect(find.byType(GeneratorScreen), findsOneWidget);
+    expect(find.byType(ElevatedButton), findsNWidgets(2));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify input controls
+    expect(find.text('Number of Digits (1-6)'), findsOneWidget);
+    expect(find.text('Number of Problems'), findsOneWidget);
+    expect(find.byType(Slider), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsNWidgets(4));
   });
 }
