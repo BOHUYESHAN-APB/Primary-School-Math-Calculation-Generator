@@ -1,60 +1,34 @@
-library math_generator;
-
-import 'dart:math';
 import 'package:flutter/foundation.dart';
-
-part 'src/models/math_problem.dart';
-part 'src/models/operation_type.dart';
-part 'src/services/problem_generator_service.dart';
-part 'src/services/formatting_service.dart';
-part 'src/utils/number_generator.dart';
+import 'src/models/generation_constraints.dart';
+import 'src/models/math_problem.dart';
+import 'src/models/operation_type.dart';
+import 'src/services/formatting_service.dart';
+import 'src/services/number_generator_service.dart';
+import 'src/services/problem_generator_service.dart';
 
 class MathGenerator {
-  final ProblemGeneratorService _generatorService;
-  final FormattingService _formattingService;
-  final Random _random;
+  late final NumberGeneratorService _numberService;
+  late final ProblemGeneratorService _problemService;
+  late final FormattingService _formatter;
 
-  MathGenerator({
-    Random? random,
-    ProblemGeneratorService? generatorService,
-    FormattingService? formattingService,
-  })  : _random = random ?? Random(),
-        _generatorService = generatorService ?? ProblemGeneratorService(),
-        _formattingService = formattingService ?? FormattingService();
-
-  List<MathProblem> generateProblems({
-    required int count,
-    required Set<OperationType> operations,
-    required GenerationConstraints constraints,
-  }) {
-    final problems = <MathProblem>[];
-    final seenHashes = <String>{};
-
-    while (problems.length < count) {
-      final operation = _getRandomOperation(operations);
-      final numbers = _generatorService.generateNumbers(
-        operation: operation,
-        constraints: constraints,
-        random: _random,
-      );
-
-      final problem = MathProblem(
-        operand1: numbers.first,
-        operand2: numbers.last,
-        operation: operation,
-        constraints: constraints,
-      )..validate();
-
-      if (!seenHashes.contains(problem.uniqueHash)) {
-        problems.add(problem);
-        seenHashes.add(problem.uniqueHash);
-      }
-    }
-
-    return problems;
+  MathGenerator() {
+    _numberService = NumberGeneratorService();
+    _formatter = FormattingService();
+    _problemService = ProblemGeneratorService(
+      numberService: _numberService,
+      formatter: _formatter,
+    );
   }
 
-  OperationType _getRandomOperation(Set<OperationType> operations) {
-    return operations.elementAt(_random.nextInt(operations.length));
+  Future<List<MathProblem>> generateProblems({
+    required int problemCount,
+    required Set<OperationType> operations,
+    required GenerationConstraints constraints,
+  }) async {
+    return await _problemService.generateBatch(
+      count: problemCount,
+      operations: operations,
+      constraints: constraints,
+    );
   }
 }

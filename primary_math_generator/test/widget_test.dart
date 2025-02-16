@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:primary_math_generator/main.dart';
-import 'package:primary_math_generator/core/math_generator.dart';
 
 void main() {
-  testWidgets('App launches and shows generator screen',
-      (WidgetTester tester) async {
-    // Load app widget
-    await tester.pumpWidget(const MathGeneratorApp());
+  testWidgets('App launches and shows generator screen', (WidgetTester tester) async {
+    // Build our app and trigger a frame
+    await tester.pumpWidget(const MyApp());
 
-    // Wait for initial frame
+    // Wait for initial layout and animations to complete
     await tester.pumpAndSettle();
 
-    // Verify core elements exist
-    expect(find.text('Math Problem Generator'), findsOneWidget);
-    expect(find.byType(GeneratorScreen), findsOneWidget);
-    expect(find.byType(ElevatedButton), findsNWidgets(2));
+    // Verify AppBar title exists
+    expect(find.text('Math Problems'), findsOneWidget);
+
+    // Verify FloatingActionButton exists
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+
+    // Verify initial empty state
+    expect(find.byType(ListView), findsOneWidget);
+    expect(find.byType(ProblemCard), findsNothing);
+  });
 
     // Verify input controls
     expect(find.text('Number of Digits (1-6)'), findsOneWidget);
