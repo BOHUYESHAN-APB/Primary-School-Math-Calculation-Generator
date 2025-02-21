@@ -1,4 +1,5 @@
-import '../models/settings_model.dart';
+import 'settings_model.dart';
+import 'math_operation.dart';
 
 class MathQuestion {
   final String expression;

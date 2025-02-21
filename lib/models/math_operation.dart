@@ -1,22 +1,34 @@
 enum MathOperation {
-  addition('+'),
-  subtraction('-'),
-  multiplication('×'),
-  division('÷');
+  addition,
+  subtraction,
+  multiplication,
+  division,
+}
 
-  final String symbol;
-  const MathOperation(this.symbol);
+extension MathOperationExtension on MathOperation {
+  String get symbol {
+    switch (this) {
+      case MathOperation.addition:
+        return '+';
+      case MathOperation.subtraction:
+        return '-';
+      case MathOperation.multiplication:
+        return '×';
+      case MathOperation.division:
+        return '÷';
+    }
+  }
 
   String get displayName {
     switch (this) {
       case MathOperation.addition:
-        return '加法';
+        return 'Addition';
       case MathOperation.subtraction:
-        return '减法';
+        return 'Subtraction';
       case MathOperation.multiplication:
-        return '乘法';
+        return 'Multiplication';
       case MathOperation.division:
-        return '除法';
+        return 'Division';
     }
   }
 }
