@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/settings_model.dart';
 
+typedef ValueChanged2<T1, T2> = void Function(T1 value1, T2 value2);
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -14,12 +16,21 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildNumberSetting('题目数量', settings.questionCount,
-              (value) => settings.updateSettings(questionCount: value),
-              min: 10, max: 100),
-          _buildNumberSetting('数值范围', settings.numberRange,
-              (value) => settings.updateSettings(numberRange: value),
-              min: 10, max: 10000),
+          _buildRangeSetting(
+              '题目数量',
+              settings.questionCount,
+              settings.questionCount,
+              (min, max) => settings.updateSettings(questionCount: max),
+              min: 10,
+              max: 1000),
+          _buildRangeSetting(
+              '数值范围',
+              settings.minNumber,
+              settings.maxNumber,
+              (min, max) =>
+                  settings.updateSettings(minNumber: min, maxNumber: max),
+              min: 10,
+              max: 10000),
           _buildDecimalPlacesSetting(settings),
           _buildFormatSetting(settings),
           _buildOperationTypes(settings),
@@ -34,21 +45,36 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNumberSetting(
-      String title, int value, ValueChanged<int> onChanged,
+  Widget _buildRangeSetting(String title, int minValue, int maxValue,
+      ValueChanged2<int, int> onChanged,
       {required int min, required int max}) {
     return ListTile(
-      title: Text('$title: $value'),
+      title: Text('$title: $minValue-$maxValue'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: const Icon(Icons.remove),
-            onPressed: value > min ? () => onChanged(value - 10) : null,
+          SizedBox(
+            width: 120,
+            child: TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '最小值',
+                hintText: '$minValue',
+              ),
+              onChanged: (value) => onChanged(int.parse(value), maxValue),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: value < max ? () => onChanged(value + 10) : null,
+          SizedBox(width: 20),
+          SizedBox(
+            width: 120,
+            child: TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: '最大值',
+                hintText: '$maxValue',
+              ),
+              onChanged: (value) => onChanged(minValue, int.parse(value)),
+            ),
           ),
         ],
       ),
@@ -111,7 +137,7 @@ class SettingsScreen extends StatelessWidget {
               onSelected: (selected) {
                 final newOps = Set<String>.from(settings.operations);
                 selected ? newOps.add(entry.key) : newOps.remove(entry.key);
-                settings.updateSettings(operations: newOps);
+                settings.updateSettings(operations: newOps.toList());
               },
             );
           }).toList(),
