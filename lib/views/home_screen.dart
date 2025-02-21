@@ -39,8 +39,8 @@ class HomeScreen extends StatelessWidget {
                 minNumber: settings.minNumber,
                 maxNumber: settings.maxNumber,
                 operations: settings.operations.toSet(),
-                allowDecimals: settings.allowDecimal,
-                allowNegatives: settings.allowNegative,
+                allowDecimal: settings.allowDecimal,
+                allowNegative: settings.allowNegative,
                 displayFormat: settings.displayFormat,
                 showProcess: settings.showProcess,
               ),
@@ -159,7 +159,8 @@ class HomeScreen extends StatelessWidget {
       double lineHeight = 0;
 
       for (var line in lines) {
-        final textWidth = expressionFont.measureString(line).width;
+        final Size textSize = expressionFont.measureString(line);
+        final textWidth = textSize.width;
         page.graphics.drawString(
           line,
           expressionFont,
@@ -182,7 +183,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     // 添加答案页（智能分栏版）
-    final PdfPage answerPage = pdfDoc.pages.add();
+    PdfPage answerPage = pdfDoc.pages.add();
     final PdfFont answerTitleFont =
         PdfStandardFont(PdfFontFamily.helvetica, 20, style: PdfFontStyle.bold);
     final PdfFont answerFont = PdfStandardFont(PdfFontFamily.helvetica, 14);
@@ -229,13 +230,12 @@ class HomeScreen extends StatelessWidget {
         format: PdfStringFormat(lineSpacing: 5.0),
       );
 
-      final textHeight = answerFont
-          .measureString(
-            answerContent.toString(),
-            width: columnWidth,
-            format: PdfStringFormat(lineSpacing: 5.0),
-          )
-          .height;
+      final PdfLayoutResult layoutResult = textElement.draw(
+        page: answerPage,
+        bounds: Rect.fromLTWH(0, 0, columnWidth, double.infinity),
+      )!;
+
+      final textHeight = layoutResult.bounds.height;
 
       // 换页判断
       if (currentY + textHeight > answerPage.size.height - 50) {

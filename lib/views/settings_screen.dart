@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/math_operation.dart' as mo;
 import '../models/settings_model.dart';
 
 typedef ValueChanged2<T1, T2> = void Function(T1 value1, T2 value2);
@@ -33,7 +34,7 @@ class SettingsScreen extends StatelessWidget {
               max: 10000),
           _buildDecimalPlacesSetting(settings),
           _buildFormatSetting(settings),
-          _buildOperationTypes(settings),
+          _buildOperationTypes(context, settings),
           _buildCheckboxSetting('显示计算过程', settings.showProcess,
               (value) => settings.updateSettings(showProcess: value)),
           _buildCheckboxSetting('允许负数结果', settings.allowNegative,
@@ -120,8 +121,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOperationTypes(SettingsModel settings) {
-    const operations = {'+': '加法', '-': '减法', '×': '乘法', '÷': '除法'};
+  Widget _buildOperationTypes(BuildContext context, SettingsModel settings) {
+    final operations = mo.MathOperation.values;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,14 +131,24 @@ class SettingsScreen extends StatelessWidget {
           child: Text('运算类型:', style: TextStyle(fontSize: 16)),
         ),
         Wrap(
-          children: operations.entries.map((entry) {
+          children: operations.map((entry) {
             return FilterChip(
-              label: Text(entry.value),
-              selected: settings.operations.contains(entry.key),
+              label: Text(entry.displayName),
+              selected: settings.operations.contains(entry.symbol),
               onSelected: (selected) {
-                final newOps = Set<String>.from(settings.operations);
-                selected ? newOps.add(entry.key) : newOps.remove(entry.key);
-                settings.updateSettings(operations: newOps.toList());
+                final Set<mo.MathOperation> newOps =
+                    Set<mo.MathOperation>.from(settings.operations);
+                selected ? newOps.add(entry) : newOps.remove(entry);
+
+                if (newOps.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('至少需要选择一种运算类型'),
+                    duration: Duration(seconds: 2),
+                  ));
+                  return;
+                }
+
+                settings.updateSettings(operations: newOps);
               },
             );
           }).toList(),

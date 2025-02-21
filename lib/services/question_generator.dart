@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import '../models/math_question.dart';
+import '../models/math_operation.dart';
 import '../models/settings_model.dart';
 
 class QuestionGenerator extends ChangeNotifier {
@@ -16,11 +17,12 @@ class QuestionGenerator extends ChangeNotifier {
     required int minNumber,
     required int maxNumber,
     required Set<MathOperation> operations,
-    required bool allowDecimals,
-    required bool allowNegatives,
+    required bool allowDecimal,
+    required bool allowNegative,
     required DisplayFormat displayFormat,
-    required bool showSteps,
+    required bool showProcess,
   }) {
+    // 添加showSteps参数的使用
     // Implementation remains the same
     _questions = [];
 
@@ -54,6 +56,7 @@ class QuestionGenerator extends ChangeNotifier {
         expression: expression,
         answer: answer,
         type: operation,
+        showSteps: showProcess,
       ));
     }
     notifyListeners();

@@ -1,7 +1,9 @@
+import '../models/settings_model.dart';
+
 class MathQuestion {
   final String expression;
   final String answer;
-  final String type;
+  final MathOperation type;
   final List<String>? steps;
   final bool showSteps;
 

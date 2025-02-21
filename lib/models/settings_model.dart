@@ -1,17 +1,5 @@
 import 'package:flutter/foundation.dart';
-
-enum MathOperation {
-  addition('+'),
-  subtraction('-'),
-  multiplication('×'),
-  division('÷');
-
-  final String symbol;
-  const MathOperation(this.symbol);
-
-  @override
-  String toString() => symbol;
-}
+import 'math_operation.dart';
 
 enum DisplayFormat { horizontal, vertical, both }
 
@@ -73,7 +61,7 @@ class SettingsModel extends ChangeNotifier {
     questionCount: 20,
     numberRangeMin: 10,
     numberRangeMax: 10000,
-    decimalPlaces: 2,
+    decimalPlaces: 0,
     allowCombination: false,
     operations: {
       MathOperation.addition,
@@ -83,8 +71,8 @@ class SettingsModel extends ChangeNotifier {
     },
     displayFormat: DisplayFormat.vertical,
     showProcess: true,
-    allowNegative: true,
-    allowDecimal: true,
+    allowNegative: false,
+    allowDecimal: false,
   );
 
   // Getters
