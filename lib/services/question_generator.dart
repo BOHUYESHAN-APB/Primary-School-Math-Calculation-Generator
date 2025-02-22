@@ -50,13 +50,16 @@ class QuestionGenerator extends ChangeNotifier {
           break;
       }
 
-      answer = _calculateAnswer(num1, num2, operation);
+      answer =
+          _calculateAnswer(num1, num2, operation, allowNegative, allowDecimal);
 
       _questions.add(MathQuestion(
         expression: expression,
         answer: answer,
         type: operation,
         showSteps: showProcess,
+        showNegative: allowNegative,
+        showDecimal: allowDecimal,
       ));
     }
     notifyListeners();
@@ -76,7 +79,25 @@ ${operation.symbol} $num2
     ''';
   }
 
-  String _calculateAnswer(int num1, int num2, MathOperation operation) {
+  String _calculateAnswer(int num1, int num2, MathOperation operation,
+      bool allowNegative, bool allowDecimal) {
+    // Handle negative results
+    if (operation == MathOperation.subtraction && !allowNegative) {
+      if (num1 < num2) {
+        // Swap numbers to ensure non-negative result
+        final temp = num1;
+        num1 = num2;
+        num2 = temp;
+      }
+    }
+
+    // Handle decimal results
+    if (operation == MathOperation.division && !allowDecimal) {
+      // Adjust numbers to ensure whole number result
+      num2 = num2 != 0 ? num2 : 1; // Prevent division by zero
+      num1 = num1 - (num1 % num2); // Make num1 divisible by num2
+    }
+
     switch (operation) {
       case MathOperation.addition:
         return '${num1 + num2}';
@@ -94,20 +115,28 @@ ${operation.symbol} $num2
   Future<void> exportToPDF(List<MathQuestion> questions) async {
     final PdfDocument pdf = PdfDocument();
     final PdfPage page = pdf.pages.add();
-    final PdfFont font = PdfStandardFont(PdfFontFamily.helvetica, 12);
+    
+    // Load Chinese font from assets
+    final ByteData fontData = await rootBundle.load('assets/fonts/Sunflower-Medium.ttf');
+    final PdfFont chineseFont = PdfTrueTypeFont(pdf, fontData.buffer.asUint8List());
 
-    page.graphics.drawString('数学练习题', font,
+    // Draw title with Chinese font
+    page.graphics.drawString('数学练习题', chineseFont,
         bounds: Rect.fromLTWH(0, 0, page.size.width, 30));
 
     double yPos = 40;
     for (var question in questions) {
-      page.graphics.drawString(question.expression, font,
+      page.graphics.drawString(question.expression, chineseFont,
           bounds: Rect.fromLTWH(50, yPos, page.size.width - 100, 20));
       yPos += 24;
     }
 
-    // 保存文件逻辑（需要实现）
-    // final List<int> bytes = await pdf.save();
-    // pdf.dispose();
-  }
-}
+    // Add answer page
+    final PdfPage answerPage = pdf.pages.add();
+    yPos = 40;
+    answerPage.graphics.drawString('参考答案', chineseFont,
+        bounds: Rect.fromLTWH(0, 0, page.size.width, 30));
+    
+    for (var question in questions) {
+      answerPage.graphics.drawString(
+          '${question.expression} 答案: ${question.answer}', 
