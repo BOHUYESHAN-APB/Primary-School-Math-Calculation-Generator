@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/math_operation.dart' as mo;
+import '../models/math_operation.dart';
 import '../models/settings_model.dart';
 
 typedef ValueChanged2<T1, T2> = void Function(T1 value1, T2 value2);
@@ -22,7 +22,7 @@ class SettingsScreen extends StatelessWidget {
               settings.questionCount,
               settings.questionCount,
               (min, max) => settings.updateSettings(questionCount: max),
-              min: 10,
+              min: 1,
               max: 1000),
           _buildRangeSetting(
               '数值范围',
@@ -30,8 +30,8 @@ class SettingsScreen extends StatelessWidget {
               settings.maxNumber,
               (min, max) =>
                   settings.updateSettings(minNumber: min, maxNumber: max),
-              min: 10,
-              max: 10000),
+              min: 1,
+              max: 999999),
           _buildDecimalPlacesSetting(settings),
           _buildFormatSetting(settings),
           _buildOperationTypes(context, settings),
@@ -46,6 +46,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建范围设置
   Widget _buildRangeSetting(String title, int minValue, int maxValue,
       ValueChanged2<int, int> onChanged,
       {required int min, required int max}) {
@@ -62,10 +63,10 @@ class SettingsScreen extends StatelessWidget {
                 labelText: '最小值',
                 hintText: '$minValue',
               ),
-              onChanged: (value) => onChanged(int.parse(value), maxValue),
+              onChanged: (value) => onChanged(int.tryParse(value) ?? minValue, maxValue),
             ),
           ),
-          SizedBox(width: 20),
+          const SizedBox(width: 20),
           SizedBox(
             width: 120,
             child: TextField(
@@ -74,7 +75,7 @@ class SettingsScreen extends StatelessWidget {
                 labelText: '最大值',
                 hintText: '$maxValue',
               ),
-              onChanged: (value) => onChanged(minValue, int.parse(value)),
+              onChanged: (value) => onChanged(minValue, int.tryParse(value) ?? maxValue),
             ),
           ),
         ],
@@ -82,21 +83,25 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建小数位数设置
   Widget _buildDecimalPlacesSetting(SettingsModel settings) {
     return ListTile(
       title: const Text('小数位数'),
       trailing: DropdownButton<int>(
         value: settings.decimalPlaces,
         items: const [
+          DropdownMenuItem(value: 0, child: Text('整数')),
           DropdownMenuItem(value: 1, child: Text('1位')),
           DropdownMenuItem(value: 2, child: Text('2位')),
           DropdownMenuItem(value: 3, child: Text('3位')),
+          DropdownMenuItem(value: 4, child: Text('4位')),
         ],
-        onChanged: (value) => settings.updateSettings(decimalPlaces: value),
+        onChanged: (value) => settings.updateSettings(decimalPlaces: value ?? 0),
       ),
     );
   }
 
+  /// 构建格式设置
   Widget _buildFormatSetting(SettingsModel settings) {
     return ListTile(
       title: const Text('输出格式'),
@@ -121,8 +126,9 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建运算类型设置
   Widget _buildOperationTypes(BuildContext context, SettingsModel settings) {
-    final operations = mo.MathOperation.values;
+    final operations = MathOperation.values;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,14 +137,16 @@ class SettingsScreen extends StatelessWidget {
           child: Text('运算类型:', style: TextStyle(fontSize: 16)),
         ),
         Wrap(
-          children: operations.map((entry) {
+          spacing: 8.0,
+          runSpacing: 4.0,
+          children: operations.map((operation) {
             return FilterChip(
-              label: Text(entry.displayName),
-              selected: settings.operations.contains(entry.symbol),
+              label: Text(operation.displayName),
+              selected: settings.operations.contains(operation),
               onSelected: (selected) {
-                final Set<mo.MathOperation> newOps =
-                    Set<mo.MathOperation>.from(settings.operations);
-                selected ? newOps.add(entry) : newOps.remove(entry);
+                final Set<MathOperation> newOps =
+                    Set<MathOperation>.from(settings.operations);
+                selected ? newOps.add(operation) : newOps.remove(operation);
 
                 if (newOps.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -157,6 +165,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建复选框设置
   Widget _buildCheckboxSetting(
       String title, bool value, ValueChanged<bool> onChanged) {
     return CheckboxListTile(

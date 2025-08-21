@@ -1,21 +1,47 @@
 import 'package:flutter/foundation.dart';
 import 'math_operation.dart';
 
-enum DisplayFormat { horizontal, vertical, both }
+/// 显示格式枚举
+enum DisplayFormat { 
+  horizontal, // 横式
+  vertical,   // 竖式
+  both        // 两者
+}
 
+/// 应用设置数据模型
 @immutable
 class AppSettings {
+  /// 题目数量
   final int questionCount;
+  
+  /// 数字范围最小值
   final int numberRangeMin;
+  
+  /// 数字范围最大值
   final int numberRangeMax;
+  
+  /// 小数位数
   final int decimalPlaces;
+  
+  /// 是否允许组合运算
   final bool allowCombination;
+  
+  /// 运算类型集合
   final Set<MathOperation> operations;
+  
+  /// 显示格式
   final DisplayFormat displayFormat;
+  
+  /// 是否显示计算过程
   final bool showProcess;
+  
+  /// 是否允许负数
   final bool allowNegative;
+  
+  /// 是否允许小数
   final bool allowDecimal;
 
+  /// 构造函数
   const AppSettings({
     required this.questionCount,
     required this.numberRangeMin,
@@ -29,6 +55,7 @@ class AppSettings {
     required this.allowDecimal,
   });
 
+  /// 创建副本
   AppSettings copyWith({
     int? questionCount,
     int? numberRangeMin,
@@ -56,7 +83,9 @@ class AppSettings {
   }
 }
 
+/// 设置模型
 class SettingsModel extends ChangeNotifier {
+  /// 当前设置
   AppSettings _settings = const AppSettings(
     questionCount: 20,
     numberRangeMin: 10,
@@ -87,6 +116,7 @@ class SettingsModel extends ChangeNotifier {
   bool get allowNegative => _settings.allowNegative;
   bool get allowDecimal => _settings.allowDecimal;
 
+  /// 更新设置
   void updateSettings({
     int? questionCount,
     int? minNumber,
@@ -112,22 +142,22 @@ class SettingsModel extends ChangeNotifier {
       allowCombination: allowCombination,
     );
 
-    // Validate new settings
+    // 验证新设置
     if (newSettings.questionCount < 1 || newSettings.questionCount > 1000) {
-      throw ArgumentError('Question count must be between 1 and 1000');
+      throw ArgumentError('题目数量必须在1到1000之间');
     }
-    if (newSettings.numberRangeMin < 10 || newSettings.numberRangeMax > 10000) {
-      throw ArgumentError('Number range must be between 10 and 10000');
+    if (newSettings.numberRangeMin < 1 || newSettings.numberRangeMax > 999999) {
+      throw ArgumentError('数字范围必须在1到999999之间');
     }
     if (newSettings.numberRangeMin >= newSettings.numberRangeMax) {
-      throw ArgumentError('Minimum number must be less than maximum number');
+      throw ArgumentError('最小数字必须小于最大数字');
     }
     if (newSettings.operations.isEmpty) {
-      throw ArgumentError('At least one operation must be selected');
+      throw ArgumentError('至少需要选择一种运算类型');
     }
     if (newSettings.allowDecimal &&
         (newSettings.decimalPlaces < 0 || newSettings.decimalPlaces > 4)) {
-      throw ArgumentError('Decimal places must be between 0 and 4');
+      throw ArgumentError('小数位数必须在0到4之间');
     }
 
     _settings = newSettings;
