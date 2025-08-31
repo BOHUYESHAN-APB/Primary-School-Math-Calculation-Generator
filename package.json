@@ -1,0 +1,118 @@
+{
+  "name": "mathbud-digital-math",
+  "version": "1.0.0-alpha",
+  "private": true,
+  "description": "数字芽算（MathBud） - 智能数学题目生成器",
+  "scripts": {
+    "build": "cd math-question-generator && npm run build",
+    "android:prepare": "npm run build && npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "npx cap build android",
+    "android:run": "npx cap run android",
+    "ios:prepare": "npm run build && npx cap add ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "windows:prepare": "npm run build && electron-builder install-app-deps",
+    "windows:build": "npm run build && electron-builder --win",
+    "windows:build-msi": "npm run build && electron-builder --win msi",
+    "dist": "npm run build && electron-builder"
+  },
+  "main": "electron/main.js",
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "electron": "^32.3.3",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.astrasynergy.mathbud",
+    "productName": "数字芽算（MathBud）",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "math-question-generator/dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "mcp-server/",
+        "to": "mcp-server/",
+        "filter": [
+          "**/*",
+          "!**/*.pyc",
+          "!**/__pycache__"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "msi",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "数字芽算（MathBud）"
+    },
+    "msi": {
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    }
+  }
+}

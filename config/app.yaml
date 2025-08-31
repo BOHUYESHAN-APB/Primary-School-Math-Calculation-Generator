@@ -1,0 +1,327 @@
+# 小学数学题目生成系统配置文件
+app:
+  name: "小学数学题目生成器"
+  name_en: "Primary School Math Question Generator"
+  version: "1.0.0-alpha"
+  description: "智能生成小学数学计算题的教育工具"
+  description_en: "Educational tool for generating primary school math questions intelligently"
+  
+  # 开发信息
+  author: "Astra Synergy Team"
+  license: "MIT"
+  repository: "https://github.com/astra-synergy/primary-school-math-generator"
+  
+  # 支持的语言
+  supported_languages:
+    - "zh-CN"
+    - "en-US"
+  
+  # 默认配置
+  defaults:
+    language: "zh-CN"
+    education_system: "domestic"
+    theme: "light"
+
+# 数学题目生成配置
+math_generation:
+  # 支持的运算类型
+  operation_types:
+    - id: "addition"
+      name_zh: "加法"
+      name_en: "Addition"
+      enabled: true
+      min_grade: 1
+      max_grade: 6
+    - id: "subtraction"
+      name_zh: "减法"
+      name_en: "Subtraction"
+      enabled: true
+      min_grade: 1
+      max_grade: 6
+    - id: "multiplication"
+      name_zh: "乘法"
+      name_en: "Multiplication"
+      enabled: true
+      min_grade: 2
+      max_grade: 6
+    - id: "division"
+      name_zh: "除法"
+      name_en: "Division"
+      enabled: true
+      min_grade: 2
+      max_grade: 6
+    - id: "mixed_operations"
+      name_zh: "混合运算"
+      name_en: "Mixed Operations"
+      enabled: true
+      min_grade: 3
+      max_grade: 6
+    - id: "percentage"
+      name_zh: "百分数运算"
+      name_en: "Percentage Operations"
+      enabled: true
+      min_grade: 4
+      max_grade: 6
+    - id: "square_root"
+      name_zh: "平方根"
+      name_en: "Square Root"
+      enabled: true
+      min_grade: 5
+      max_grade: 6
+    - id: "power"
+      name_zh: "幂运算"
+      name_en: "Power Operations"
+      enabled: true
+      min_grade: 5
+      max_grade: 6
+
+  # 知识点配置
+  knowledge_points:
+    - id: "basic_arithmetic"
+      name_zh: "基础运算"
+      name_en: "Basic Arithmetic"
+      category: "arithmetic"
+    - id: "carry_addition"
+      name_zh: "进位加法"
+      name_en: "Carry Addition"
+      category: "arithmetic"
+    - id: "borrow_subtraction"
+      name_zh: "退位减法"
+      name_en: "Borrow Subtraction"
+      category: "arithmetic"
+    - id: "multiplication_table"
+      name_zh: "乘法口诀"
+      name_en: "Multiplication Table"
+      category: "arithmetic"
+    - id: "division_concept"
+      name_zh: "除法概念"
+      name_en: "Division Concept"
+      category: "arithmetic"
+    - id: "fraction_operation"
+      name_zh: "分数运算"
+      name_en: "Fraction Operation"
+      category: "fraction"
+    - id: "decimal_operation"
+      name_zh: "小数运算"
+      name_en: "Decimal Operation"
+      category: "decimal"
+    - id: "percentage_calculation"
+      name_zh: "百分数计算"
+      name_en: "Percentage Calculation"
+      category: "percentage"
+    - id: "mixed_operations_order"
+      name_zh: "混合运算顺序"
+      name_en: "Mixed Operations Order"
+      category: "advanced"
+    - id: "square_root_concept"
+      name_zh: "平方根概念"
+      name_en: "Square Root Concept"
+      category: "advanced"
+    - id: "power_calculation"
+      name_zh: "幂运算"
+      name_en: "Power Calculation"
+      category: "advanced"
+
+  # 难度等级配置
+  difficulty_levels:
+    1:
+      name_zh: "入门"
+      name_en: "Beginner"
+      color: "#10b981"
+    2:
+      name_zh: "很简单"
+      name_en: "Very Easy"
+      color: "#34d399"
+    3:
+      name_zh: "简单"
+      name_en: "Easy"
+      color: "#6ee7b7"
+    4:
+      name_zh: "适中"
+      name_en: "Moderate"
+      color: "#fbbf24"
+    5:
+      name_zh: "中等"
+      name_en: "Medium"
+      color: "#f59e0b"
+    6:
+      name_zh: "较难"
+      name_en: "Moderately Hard"
+      color: "#d97706"
+    7:
+      name_zh: "困难"
+      name_en: "Hard"
+      color: "#dc2626"
+    8:
+      name_zh: "很困难"
+      name_en: "Very Hard"
+      color: "#b91c1c"
+    9:
+      name_zh: "极难"
+      name_en: "Extremely Hard"
+      color: "#991b1b"
+    10:
+      name_zh: "超级困难"
+      name_en: "Super Hard"
+      color: "#7f1d1d"
+
+# AI配置
+ai:
+  # 默认AI服务配置
+  default_service: "deepseek"
+  timeout: 30
+  max_retries: 3
+  
+  # 支持的AI服务
+  services:
+    deepseek:
+      name: "DeepSeek Math"
+      api_base: "https://api.deepseek.com"
+      model: "deepseek-chat"
+      requires_key: true
+    openai:
+      name: "OpenAI GPT"
+      api_base: "https://api.openai.com"
+      model: "gpt-4"
+      requires_key: true
+    local:
+      name: "本地模型"
+      api_base: "http://localhost:11434"
+      model: "llama3.1"
+      requires_key: false
+
+# MCP服务器配置
+mcp_server:
+  host: "localhost"
+  port: 8001
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "http://localhost:5174"
+    - "http://localhost:5175"
+    - "http://localhost:8000"
+    - "http://localhost:8001"
+  
+  # 计算引擎配置
+  engines:
+    - name: "sympy"
+      priority: 1
+      enabled: true
+    - name: "eval"
+      priority: 2
+      enabled: true
+  
+  # 安全配置
+  security:
+    forbidden_imports:
+      - "os"
+      - "sys"
+      - "subprocess"
+      - "socket"
+      - "shutil"
+      - "pickle"
+    forbidden_functions:
+      - "exec"
+      - "eval"
+      - "compile"
+      - "open"
+      - "file"
+
+# 导出配置
+export:
+  formats:
+    - id: "html"
+      name_zh: "HTML格式"
+      name_en: "HTML Format"
+      enabled: true
+      extension: ".html"
+    - id: "pdf"
+      name_zh: "PDF格式"
+      name_en: "PDF Format"
+      enabled: true
+      extension: ".pdf"
+    - id: "word"
+      name_zh: "Word文档"
+      name_en: "Word Document"
+      enabled: false
+      extension: ".docx"
+  
+  # PDF配置
+  pdf:
+    default_font: "helvetica"
+    support_chinese: false
+    page_size: "A4"
+    margin: 20
+
+# 开源协议和依赖
+licenses:
+  app_license:
+    name: "MIT License"
+    url: "https://opensource.org/licenses/MIT"
+    text: |
+      MIT License
+      
+      Copyright (c) 2024 Astra Synergy Team
+      
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+      
+      The above copyright notice and this permission notice shall be included in all
+      copies or substantial portions of the Software.
+      
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+  
+  dependencies:
+    frontend:
+      - name: "React"
+        version: "^18.0.0"
+        license: "MIT"
+        url: "https://reactjs.org"
+      - name: "TypeScript"
+        version: "^5.0.0"
+        license: "Apache-2.0"
+        url: "https://www.typescriptlang.org"
+      - name: "Tailwind CSS"
+        version: "^3.0.0"
+        license: "MIT"
+        url: "https://tailwindcss.com"
+      - name: "Vite"
+        version: "^5.0.0"
+        license: "MIT"
+        url: "https://vitejs.dev"
+      - name: "Lucide React"
+        version: "^0.400.0"
+        license: "ISC"
+        url: "https://lucide.dev"
+      - name: "jsPDF"
+        version: "^2.5.0"
+        license: "MIT"
+        url: "https://github.com/parallax/jsPDF"
+    
+    backend:
+      - name: "FastAPI"
+        version: "^0.68.0"
+        license: "MIT"
+        url: "https://fastapi.tiangolo.com"
+      - name: "SymPy"
+        version: "^1.9"
+        license: "BSD-3-Clause"
+        url: "https://www.sympy.org"
+      - name: "Uvicorn"
+        version: "^0.15.0"
+        license: "BSD-3-Clause"
+        url: "https://www.uvicorn.org"
+      - name: "Pydantic"
+        version: "^1.8.2"
+        license: "MIT"
+        url: "https://pydantic-docs.helpmanual.io"
