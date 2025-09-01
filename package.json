@@ -3,6 +3,7 @@
   "version": "1.0.0-alpha",
   "private": true,
   "description": "数字芽算（MathBud） - 智能数学题目生成器",
+  "author": "AstraSynergy",
   "scripts": {
     "build": "cd math-question-generator && npm run build",
     "android:prepare": "npm run build && npx cap add android",
@@ -56,6 +57,9 @@
         ]
       }
     ],
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    },
     "win": {
       "target": [
         {
@@ -114,5 +118,8 @@
       ],
       "icon": "build/icon.png"
     }
+  },
+  "electronDownload": {
+    "mirror": "https://npmmirror.com/mirrors/electron/"
   }
 }

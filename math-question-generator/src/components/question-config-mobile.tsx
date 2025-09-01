@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -125,13 +125,7 @@ const QuestionConfigMobile: React.FC<QuestionConfigMobileProps> = ({
     saveConfigToStorage(newConfig);
   };
   
-  const handleGradeLevelChange = (value: string) => {
-    const gradeLevel = parseInt(value);
-    const newConfig = { ...config, gradeLevel };
-    setConfig(newConfig);
-    onConfigChange(newConfig);
-    saveConfigToStorage(newConfig);
-  };
+
   
   const handleIncludeDecimalsChange = (checked: boolean) => {
     const newConfig = { ...config, includeDecimals: checked };

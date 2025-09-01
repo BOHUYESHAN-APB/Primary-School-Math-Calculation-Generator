@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Minus, X, Maximize2, Minimize2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 interface TitleBarProps {
   title?: string;
@@ -50,16 +49,17 @@ export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps)
   }
 
   return (
+    // 修改这里：将整个标题栏设为可拖动区域
     <div className="h-12 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 flex items-center justify-between select-none app-drag-region">
-      {/* 左侧：应用标题 */}
-      <div className="flex items-center gap-3 px-4 min-w-0 flex-1">
-        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center shadow-sm">
-          <span className="text-white text-xs font-bold">数</span>
+      {/* 左侧：应用标题 - 添加可拖动区域 */}
+      <div className="flex items-center gap-3 px-4 min-w-0 flex-1 app-drag-region">
+        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center shadow-sm app-drag-region">
+          <span className="text-white text-xs font-bold app-drag-region">数</span>
         </div>
-        <span className="text-sm font-medium text-gray-700 truncate">{title}</span>
+        <span className="text-sm font-medium text-gray-700 truncate app-drag-region">{title}</span>
       </div>
 
-      {/* 右侧：窗口控制按钮 */}
+      {/* 右侧：窗口控制按钮 - 设置为不可拖动 */}
       <div className="flex items-center app-no-drag">
         <Button
           variant="ghost"

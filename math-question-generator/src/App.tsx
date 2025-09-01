@@ -124,21 +124,23 @@ function App() {
   };
 
   return (
+    // 优化整体布局，减少内边距
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* 自定义标题栏（仅在 Electron 中显示） */}
       <TitleBar title={`数字芽算（MathBud） - ${currentPage === 'generator' ? '题目生成' : currentPage === 'settings' ? '设置' : currentPage === 'about' ? '关于' : '开源协议'}`} />
       
-      <div className="flex-1 p-3 sm:p-4 lg:p-6">
+      {/* 减少内边距，使界面更紧凑 */}
+      <div className="flex-1 p-2 sm:p-3 lg:p-4">
         <div className="max-w-7xl mx-auto">
-        <header className="mb-6">
-          <div className="flex flex-col space-y-4">
-            {/* 主标题行 */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 leading-tight">
+        <header className="mb-4">
+          <div className="flex flex-col space-y-3">
+            {/* 主标题行 - 减少间距 */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 leading-tight">
                 {currentLanguage === 'zh-CN' ? '小学数学计算题生成器' : 'Primary School Math Question Generator'}
               </h1>
               {/* 语言选择器 - 移动端在标题下方，桌面端在右侧 */}
-              <div className="flex items-center gap-3 self-start sm:self-center">
+              <div className="flex items-center gap-2 self-start sm:self-center">
                 <LanguageSelector 
                   currentLanguage={currentLanguage} 
                   onLanguageChange={handleLanguageChange} 
@@ -146,47 +148,47 @@ function App() {
               </div>
             </div>
 
-            {/* 导航菜单 - 紧凑设计 */}
-            <nav className="border-b border-gray-200 pb-3">
-              <div className="flex flex-wrap gap-1 sm:gap-2">
+            {/* 导航菜单 - 更紧凑的设计 */}
+            <nav className="border-b border-gray-200 pb-2">
+              <div className="flex flex-wrap gap-1">
                 <Button
                   variant={currentPage === 'generator' ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage('generator')}
-                  className="flex items-center gap-1.5 h-8 px-3 text-xs sm:text-sm"
+                  className="flex items-center gap-1 h-8 px-2 text-xs sm:text-sm"
                 >
                   <Home className="w-3 h-3 sm:w-4 sm:h-4" />
-                  {currentLanguage === 'zh-CN' ? '题目生成' : 'Generator'}
+                  <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '题目生成' : 'Generator'}</span>
                 </Button>
                 
                 <Button
                   variant={currentPage === 'settings' ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage('settings')}
-                  className="flex items-center gap-1.5 h-8 px-3 text-xs sm:text-sm"
+                  className="flex items-center gap-1 h-8 px-2 text-xs sm:text-sm"
                 >
                   <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-                  {currentLanguage === 'zh-CN' ? '设置' : 'Settings'}
+                  <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '设置' : 'Settings'}</span>
                 </Button>
                 
                 <Button
                   variant={currentPage === 'about' ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage('about')}
-                  className="flex items-center gap-1.5 h-8 px-3 text-xs sm:text-sm"
+                  className="flex items-center gap-1 h-8 px-2 text-xs sm:text-sm"
                 >
                   <Info className="w-3 h-3 sm:w-4 sm:h-4" />
-                  {currentLanguage === 'zh-CN' ? '关于' : 'About'}
+                  <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '关于' : 'About'}</span>
                 </Button>
                 
                 <Button
                   variant={currentPage === 'licenses' ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentPage('licenses')}
-                  className="flex items-center gap-1.5 h-8 px-3 text-xs sm:text-sm"
+                  className="flex items-center gap-1 h-8 px-2 text-xs sm:text-sm"
                 >
                   <Scale className="w-3 h-3 sm:w-4 sm:h-4" />
-                  {currentLanguage === 'zh-CN' ? '开源协议' : 'Licenses'}
+                  <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '开源协议' : 'Licenses'}</span>
                 </Button>
               </div>
             </nav>
@@ -195,29 +197,30 @@ function App() {
 
         {/* 根据当前页面显示不同内容 */}
         {currentPage === 'generator' && (
-          <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
-            <div className="space-y-4">
+          // 优化网格布局间距
+          <main className="grid grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4">
+            <div className="space-y-3">
               {/* 模式切换和配置区域 - 合并到一个卡片中 */}
               <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex gap-2">
+                <CardHeader className="pb-2">
+                  <div className="flex gap-1">
                     <Button 
                       variant={isQuickStartMode ? "default" : "outline"}
                       size="sm"
                       onClick={() => setIsQuickStartMode(true)}
-                      className="flex-1 h-9"
+                      className="flex-1 h-8 px-2"
                     >
-                      <Zap className="w-3 h-3 mr-1.5" />
-                      {currentLanguage === 'zh-CN' ? '快速开始' : 'Quick Start'}
+                      <Zap className="w-3 h-3 mr-1" />
+                      <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '快速开始' : 'Quick Start'}</span>
                     </Button>
                     <Button 
                       variant={!isQuickStartMode ? "default" : "outline"}
                       size="sm"
                       onClick={() => setIsQuickStartMode(false)}
-                      className="flex-1 h-9"
+                      className="flex-1 h-8 px-2"
                     >
-                      <Settings className="w-3 h-3 mr-1.5" />
-                      {currentLanguage === 'zh-CN' ? '自定义设置' : 'Custom Settings'}
+                      <Settings className="w-3 h-3 mr-1" />
+                      <span className="hidden xs:inline">{currentLanguage === 'zh-CN' ? '自定义设置' : 'Custom Settings'}</span>
                     </Button>
                   </div>
                 </CardHeader>
@@ -231,7 +234,7 @@ function App() {
                       currentLanguage={currentLanguage}
                     />
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {isMobile ? (
                         <QuestionConfigMobile 
                           onConfigChange={handleConfigChange}
@@ -249,12 +252,12 @@ function App() {
                       )}
                       
                       {/* 操作按钮 - 紧凑布局 */}
-                      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
-                        <Button onClick={generateQuestions} size="sm" className="h-9 px-4">
-                          <Zap className="w-3 h-3 mr-1.5" />
+                      <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">
+                        <Button onClick={generateQuestions} size="sm" className="h-8 px-3 text-sm">
+                          <Zap className="w-3 h-3 mr-1" />
                           {currentLanguage === 'zh-CN' ? '生成题目' : 'Generate'}
                         </Button>
-                        <Button variant="outline" onClick={resetConfig} size="sm" className="h-9">
+                        <Button variant="outline" onClick={resetConfig} size="sm" className="h-8 px-2 text-sm">
                           <RotateCcw className="w-3 h-3" />
                         </Button>
                         
@@ -268,7 +271,7 @@ function App() {
                               setConfig(updatedConfig);
                               saveConfigToStorage(updatedConfig);
                             }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                           />
                           <label htmlFor="autoVerify" className="text-xs text-gray-600">
                             {currentLanguage === 'zh-CN' ? '自动验证' : 'Auto Verify'}
@@ -283,31 +286,31 @@ function App() {
               {/* 导出控制 - 仅在有题目时显示 */}
               {questions.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Download className="w-4 h-4" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-1">
+                      <Download className="w-3 h-3" />
                       {currentLanguage === 'zh-CN' ? '导出选项' : 'Export Options'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
                           id="includeSolutions"
                           checked={includeSolutions}
                           onChange={(e) => setIncludeSolutions(e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                         />
-                        <label htmlFor="includeSolutions" className="text-sm font-medium text-gray-700">
+                        <label htmlFor="includeSolutions" className="text-xs font-medium text-gray-700">
                           {currentLanguage === 'zh-CN' ? '包含答案与解析' : 'Include Solutions'}
                         </label>
                       </div>
-                      <div className="flex gap-2">
-                        <Button onClick={handleExportToHTML} variant="outline" size="sm" className="flex-1 h-9">
+                      <div className="flex gap-1">
+                        <Button onClick={handleExportToHTML} variant="outline" size="sm" className="flex-1 h-8 text-sm">
                           HTML
                         </Button>
-                        <Button onClick={handleExportToPDF} variant="outline" size="sm" className="flex-1 h-9">
+                        <Button onClick={handleExportToPDF} variant="outline" size="sm" className="flex-1 h-8 text-sm">
                           PDF
                         </Button>
                       </div>
@@ -318,20 +321,20 @@ function App() {
             </div>
             
             {/* 题目预览区域 - 优化高度和滚动 */}
-            <div className="xl:max-h-[calc(100vh-12rem)] xl:overflow-auto">
+            <div className="xl:max-h-[calc(100vh-10rem)] xl:overflow-auto">
               <Card className="h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">
                     {currentLanguage === 'zh-CN' ? '题目预览' : 'Question Preview'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <Tabs defaultValue="questions">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="questions" className="text-xs sm:text-sm">
+                    <TabsList className="grid w-full grid-cols-2 mb-3">
+                      <TabsTrigger value="questions" className="text-xs">
                         {currentLanguage === 'zh-CN' ? '题目' : 'Questions'}
                       </TabsTrigger>
-                      <TabsTrigger value="answers" className="text-xs sm:text-sm">
+                      <TabsTrigger value="answers" className="text-xs">
                         {currentLanguage === 'zh-CN' ? '答案' : 'Answers'}
                       </TabsTrigger>
                     </TabsList>

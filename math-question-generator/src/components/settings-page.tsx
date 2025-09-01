@@ -28,15 +28,6 @@ interface SettingsPageProps {
   onThemeChange: (theme: string) => void;
 }
 
-interface CustomAPIConfig {
-  id: string;
-  name: string;
-  api_base: string;
-  api_key: string;
-  model: string;
-  description: string;
-  enabled: boolean;
-}
 
 export function SettingsPage({ language, onLanguageChange, theme, onThemeChange }: SettingsPageProps) {
   const [config, setConfig] = useState<ConfigData | null>(null);
@@ -45,7 +36,6 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info', text: string } | null>(null);
   
   // 自定义API配置状态 - 已移至ai-settings组件
-  // const [customAPIs, setCustomAPIs] = useState<CustomAPIConfig[]>([]);
   
   // 本地设置状态
   const [localSettings, setLocalSettings] = useState({
