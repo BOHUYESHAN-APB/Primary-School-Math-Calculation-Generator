@@ -15,6 +15,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   close: () => ipcRenderer.invoke('window-close'),
   isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   
+  // 终端相关方法
+  createTerminal: (options) => ipcRenderer.invoke('terminal:create', options),
+  writeTerminal: (id, data) => ipcRenderer.invoke('terminal:write', id, data),
+  killTerminal: (id) => ipcRenderer.invoke('terminal:kill', id),
+  resizeTerminal: (id, cols, rows) => ipcRenderer.invoke('terminal:resize', id, cols, rows),
+  onTerminalData: (callback) => ipcRenderer.on('terminal:data', callback),
+  onTerminalExit: (callback) => ipcRenderer.on('terminal:exit', callback),
+  
+  // MCP服务器管理方法
+  startMCPServer: () => ipcRenderer.invoke('mcp-server:start'),
+  stopMCPServer: () => ipcRenderer.invoke('mcp-server:stop'),
+  onMCPServerOutput: (callback) => ipcRenderer.on('mcp-server:output', callback),
+  onMCPServerExit: (callback) => ipcRenderer.on('mcp-server:exit', callback),
+  
   // 监听菜单事件
   onMenuAction: (callback) => {
     ipcRenderer.on('menu-new-questions', callback);

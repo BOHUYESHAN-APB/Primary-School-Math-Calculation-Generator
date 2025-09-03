@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { configManager, ConfigData } from '../lib/config-manager';
 import { AISettings } from './ai-settings';
+import { TerminalManager } from './terminal-manager';
 
 interface SettingsPageProps {
   language: string;
@@ -27,7 +28,6 @@ interface SettingsPageProps {
   theme: string;
   onThemeChange: (theme: string) => void;
 }
-
 
 export function SettingsPage({ language, onLanguageChange, theme, onThemeChange }: SettingsPageProps) {
   const [config, setConfig] = useState<ConfigData | null>(null);
@@ -171,21 +171,7 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
 
   useEffect(() => {
     loadSettings();
-    loadCustomAPIs();
   }, []);
-
-  const loadCustomAPIs = async () => {
-    try {
-      const saved = localStorage.getItem('custom_ai_apis');
-      if (saved) {
-        // const apis = JSON.parse(saved);
-        // setCustomAPIs(apis);
-        // 自定义API配置已移至ai-settings组件
-      }
-    } catch (error) {
-      console.error('加载自定义API失败:', error);
-    }
-  };
 
   const loadSettings = async () => {
     try {
@@ -194,18 +180,6 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
       // 加载应用配置
       const appConfig = await configManager.loadConfig();
       setConfig(appConfig);
-
-      // 加载AI配置
-      try {
-        const response = await fetch('http://localhost:8001/api/ai-services');
-        if (response.ok) {
-          // const aiConfigData = await response.json();
-          // AI配置已加载，但不再使用独立状态
-        }
-      } catch (error) {
-        console.warn('Failed to load AI config:', error);
-      }
-
     } catch (error) {
       setMessage({ type: 'error', text: t.loadError });
       console.error('Failed to load settings:', error);
@@ -285,11 +259,12 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="general" className="h-full flex flex-col">
           <div className="px-6 pt-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">{t.general}</TabsTrigger>
               <TabsTrigger value="appearance">{t.appearance}</TabsTrigger>
               <TabsTrigger value="ai">{t.ai}</TabsTrigger>
               <TabsTrigger value="advanced">{t.advanced}</TabsTrigger>
+              <TabsTrigger value="terminal">{language === 'zh-CN' ? '终端' : 'Terminal'}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -482,6 +457,10 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
               </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="terminal" className="h-full m-0 pt-4">
+              <TerminalManager language={language} />
+            </TabsContent>
           </div>
         </Tabs>
       </div>
@@ -517,6 +496,3 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
     </div>
   );
 }
-
-
-

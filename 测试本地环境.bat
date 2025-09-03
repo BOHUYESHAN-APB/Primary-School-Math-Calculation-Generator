@@ -56,14 +56,24 @@ if exist "启动本地应用.bat" (
     exit /b 1
 )
 
+if exist "启动完整本地环境.bat" (
+    echo    ✅ 完整本地环境启动脚本存在
+) else (
+    echo    ❌ 完整本地环境启动脚本缺失
+    pause
+    exit /b 1
+)
+
 echo.
 echo ================================
 echo 环境检查完成！
 echo ================================
 echo.
 echo 使用说明：
-echo 1. 运行"启动MCP服务器.bat"启动AI服务
-echo 2. 运行"启动本地应用.bat"启动应用
+echo 1. 运行"启动完整本地环境.bat"启动完整环境（推荐）
+echo    或分别运行：
+echo    a. "启动MCP服务器.bat"启动AI服务
+echo    b. "启动本地应用.bat"启动应用
 echo.
 echo 提示：请确保已安装Python环境和Node.js环境
 echo.

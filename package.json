@@ -6,14 +6,8 @@
   "author": "AstraSynergy",
   "scripts": {
     "build": "cd math-question-generator && npm run build",
-    "android:prepare": "npm run build && npx cap add android",
-    "android:sync": "npx cap sync android",
-    "android:open": "npx cap open android",
-    "android:build": "npx cap build android",
-    "android:run": "npx cap run android",
-    "ios:prepare": "npm run build && npx cap add ios",
-    "ios:sync": "npx cap sync ios",
-    "ios:open": "npx cap open ios",
+    "start": "electron .",
+    "dev": "cd math-question-generator && npm run dev",
     "windows:prepare": "npm run build && electron-builder install-app-deps",
     "windows:build": "npm run build && electron-builder --win",
     "windows:build-msi": "npm run build && electron-builder --win msi",
@@ -21,19 +15,8 @@
   },
   "main": "electron/main.js",
   "devDependencies": {
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/cli": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
-    "@capacitor/ios": "^6.0.0",
     "electron": "^32.3.3",
     "electron-builder": "^25.0.0"
-  },
-  "dependencies": {
-    "@capacitor/app": "^6.0.0",
-    "@capacitor/haptics": "^6.0.0",
-    "@capacitor/keyboard": "^6.0.0",
-    "@capacitor/splash-screen": "^6.0.0",
-    "@capacitor/status-bar": "^6.0.0"
   },
   "build": {
     "appId": "com.astrasynergy.mathbud",
@@ -121,5 +104,9 @@
   },
   "electronDownload": {
     "mirror": "https://npmmirror.com/mirrors/electron/"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0"
   }
 }

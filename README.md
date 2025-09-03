@@ -1,8 +1,8 @@
-# 小学数学题生成器
+# 数字芽算(MathBud) - 小学数学题目生成器
 
 ## 项目简介
 
-小学数学题生成器是一个基于Flutter开发的跨平台应用程序，可以生成各种类型的数学练习题，包括整数和小数的加减乘除运算。该应用支持多种输出格式，并可以将生成的题目导出为PDF文件。
+数字芽算(MathBud)是一个基于React + Electron开发的跨平台桌面应用程序，可以生成各种类型的数学练习题，包括整数和小数的加减乘除运算。该应用支持多种输出格式，并可以将生成的题目导出为PDF文件。
 
 ## 功能特性
 
@@ -14,68 +14,136 @@
 - 具备题目自我纠错机制，避免出现除数为0等原则性错误
 - 支持导出PDF格式文件
 - 提供丰富的运算设置选项
+- 集成AI智能解答功能（需要配置API密钥）
+- 支持中英文界面切换
+- 响应式设计，适配桌面端和移动端
 
 ## 技术架构
 
-本项目采用Flutter框架开发，使用Dart语言编写，支持多端运行（PC、Mac、安卓、iOS）。
+本项目采用现代化的前端技术栈：
+
+### 前端技术栈
+- React 18 + TypeScript
+- Vite构建工具
+- Tailwind CSS样式框架
+- shadcn/ui组件库
+- Electron桌面应用框架
+
+### 后端服务
+- Python FastAPI MCP服务器
+- SymPy数学计算库
+- AI模型集成（DeepSeek、OpenAI等）
 
 ### 项目结构
 
 ```
-lib/
-├── main.dart                 # 应用入口
-├── models/
-│   ├── math_operation.dart   # 数学运算类型枚举
-│   ├── math_question.dart    # 数学题目数据模型
-│   └── settings_model.dart   # 设置数据模型
-├── services/
-│   └── question_generator.dart  # 题目生成服务
-└── views/
-    ├── home_screen.dart      # 主页界面
-    └── settings_screen.dart  # 设置界面
+.
+├── math-question-generator/     # React前端应用
+│   ├── src/
+│   │   ├── components/          # React组件
+│   │   ├── lib/                 # 核心库和工具
+│   │   └── App.tsx              # 应用入口
+│   └── vite.config.ts           # Vite配置
+├── electron/                    # Electron主进程
+│   ├── main.js                  # 主进程文件
+│   └── preload.js               # 预加载脚本
+├── mcp-server/                  # Python后端服务
+│   ├── main.py                  # FastAPI服务器
+│   └── requirements.txt         # Python依赖
+├── config/                      # 配置文件
+│   └── app.yaml                 # 应用配置
+└── build/                       # 构建资源
+    └── icon.ico                 # 应用图标
 ```
 
 ## 开发环境
 
-- Flutter 3.0+
-- Dart 3.0+
+- Node.js (>=18.x)
+- Python (>=3.8)
+- npm 或 yarn
 
 ## 安装依赖
 
 在项目根目录下运行以下命令安装所有依赖：
 
 ```bash
-flutter pub get
+# 安装前端依赖
+cd math-question-generator
+npm install
+cd ..
+
+# 安装Python后端依赖
+cd mcp-server
+pip install -r requirements.txt
+cd ..
 ```
 
 ## 项目运行
 
-连接设备或启动模拟器后，运行以下命令启动应用：
+### 开发模式运行
 
 ```bash
-flutter run
+# 启动前端开发服务器
+cd math-question-generator
+npm run dev
+
+# 在另一个终端启动MCP服务器
+cd mcp-server
+python main.py
 ```
 
-## 项目结构
+### 本地测试环境运行
 
-项目采用分层架构设计，各层职责如下：
+```bash
+# 运行环境检查
+.\测试本地环境.bat
 
-- `lib/main.dart`: 应用入口点
-- `lib/models/`: 数据模型层，包含数学运算类型、题目和设置模型
-- `lib/services/`: 业务逻辑层，包含题目生成和导出服务
-- `lib/views/`: UI层，包含主页和设置页面
-- `lib/core/`: 核心工具和常量
-- `lib/data/`: 数据访问层
-- `lib/domain/`: 领域层，包含业务逻辑和用例
-- `lib/presentation/`: 表示层，包含UI组件和状态管理
+# 一键启动完整环境
+.\启动完整本地环境.bat
 
-## 依赖库
+# 或分别启动
+.\启动MCP服务器.bat
+.\启动本地应用.bat
+```
 
-- `flutter`: Google的UI工具包
-- `pdf`: PDF生成库
-- `path_provider`: 路径提供器
-- `share_plus`: 分享功能支持
+## 构建Windows应用
 
-## 开发计划
+### 构建要求
+- Node.js (>=18.x)
+- Python (>=3.8)
+- electron-builder
 
-详细的开发计划请参阅[项目开发计划.md](项目开发计划.md)文件。
+### 构建步骤
+
+```bash
+# 安装Electron和构建工具
+npm install electron electron-builder --save-dev
+
+# 构建Windows可执行文件 (EXE)
+npm run windows:build
+
+# 构建MSI安装包
+npm run windows:build-msi
+```
+
+详细构建指南请参阅[Windows应用构建指南.md](Windows应用构建指南.md)文件。
+
+## AI功能配置
+
+要使用AI智能解答功能，需要配置AI服务提供商的API密钥：
+
+1. 启动应用并进入设置页面
+2. 点击"AI设置"标签页
+3. 选择AI服务提供商（如DeepSeek、OpenAI等）
+4. 输入API密钥并保存
+5. 测试连接成功后即可使用AI功能
+
+详细使用指南请参阅[AI解答功能使用指南.md](AI解答功能使用指南.md)文件。
+
+## 贡献指南
+
+欢迎提交Issue和Pull Request来改进这个项目。
+
+## 联系方式
+
+项目维护者：Astra Synergy Team

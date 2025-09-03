@@ -103,11 +103,28 @@ export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps)
 declare global {
   interface Window {
     electronAPI?: {
+      // 窗口控制方法
       minimize: () => void;
       maximize: () => void;
       unmaximize: () => void;
       close: () => void;
       isMaximized: () => Promise<boolean>;
+      
+      // 终端管理方法
+      createTerminal: (options: any) => Promise<any>;
+      writeTerminal: (id: string, data: string) => Promise<any>;
+      killTerminal: (id: string) => Promise<any>;
+      resizeTerminal?: (id: string, cols: number, rows: number) => Promise<any>;
+      onTerminalData: (callback: (event: any, data: any) => void) => void;
+      onTerminalExit: (callback: (event: any, data: any) => void) => void;
+      removeAllListeners: (channel: string) => void;
+      
+      // 其他方法
+      getAppVersion: () => Promise<string>;
+      showItemInFolder: (fullPath: string) => Promise<void>;
+      onMenuAction: (callback: (event: any, action: string) => void) => void;
+      platform: string;
+      isElectron: boolean;
     };
   }
 }

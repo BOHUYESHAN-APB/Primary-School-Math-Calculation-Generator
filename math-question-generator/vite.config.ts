@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react"
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.ELECTRON ? './' : '/',
+  base: './',  // 强制使用相对路径
   build: {
     rollupOptions: {
       output: {

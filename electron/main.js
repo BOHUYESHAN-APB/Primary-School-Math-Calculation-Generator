@@ -1,10 +1,13 @@
 const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
-// const { spawn } = require('child_process'); // 已移除MCP服务器自动启动功能
+const os = require('os');
+const { spawn, exec } = require('child_process');
+const fs = require('fs');
 
 // 保持对窗口对象的全局引用
 let mainWindow;
-// let mcpServerProcess; // 已移除MCP服务器自动启动功能
+// 终端进程管理
+const terminals = new Map();
 
 function createWindow() {
   // 创建浏览器窗口
@@ -35,6 +38,18 @@ function createWindow() {
     maximizable: true,
     minimizable: true,
     closable: true
+  });
+
+  // 设置安全策略以避免安全警告
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' localhost:* 127.0.0.1:*"
+        ]
+      }
+    });
   });
 
   // 加载应用
@@ -75,15 +90,24 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     
-    // 已移除MCP服务器自动启动功能
     // 用户需要手动运行 "启动MCP服务器.bat" 来启动服务器
-    console.log('ℹ️ 请手动运行“启动MCP服务器.bat”来启动AI服务');
+    console.log('ℹ️ 请手动运行"启动MCP服务器.bat"来启动AI服务');
   });
 
   // 当窗口关闭时触发
   mainWindow.on('closed', () => {
     mainWindow = null;
-    // stopMCPServer(); // 已移除MCP服务器自动启动功能
+    // 停止所有终端进程
+    terminals.forEach((ptyProcess, id) => {
+      try {
+        if (ptyProcess && typeof ptyProcess.kill === 'function') {
+          ptyProcess.kill();
+        }
+      } catch (e) {
+        console.error(`Failed to kill terminal ${id}:`, e);
+      }
+    });
+    terminals.clear();
   });
 
   // 处理外部链接
@@ -92,49 +116,6 @@ function createWindow() {
     return { action: 'deny' };
   });
 }
-
-// 以下函数已移除，MCP服务器现在由用户手动启动
-// 用户可以运行项目根目录中的“启动MCP服务器.bat”文件
-
-/*
-function startMCPServer() {
-  // 临时禁用MCP服务器启动，专注基础功能测试
-  // TODO: 完善Python环境检测和MCP服务器配置后重新启用
-  console.log('🔧 MCP服务器暂时禁用，专注基础功能测试');
-  
-  // 原MCP服务器启动代码 - 临时注释
-  try {
-    const serverPath = path.join(__dirname, '../mcp-server/main.py');
-    const pythonPath = 'python'; // 可以配置为具体的Python路径
-    
-    mcpServerProcess = spawn(pythonPath, [serverPath], {
-      cwd: path.join(__dirname, '../mcp-server'),
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    mcpServerProcess.stdout.on('data', (data) => {
-      console.log(`MCP Server: ${data}`);
-    });
-
-    mcpServerProcess.stderr.on('data', (data) => {
-      console.error(`MCP Server Error: ${data}`);
-    });
-
-    mcpServerProcess.on('close', (code) => {
-      console.log(`MCP Server exited with code ${code}`);
-    });
-  } catch (error) {
-    console.error('Failed to start MCP server:', error);
-  }
-}
-
-function stopMCPServer() {
-  if (mcpServerProcess) {
-    mcpServerProcess.kill();
-    mcpServerProcess = null;
-  }
-}
-*/
 
 // 创建菜单
 function createMenu() {
@@ -281,4 +262,179 @@ ipcMain.handle('window-is-maximized', () => {
     return mainWindow.isMaximized();
   }
   return false;
+});
+
+// 终端相关IPC处理
+ipcMain.handle('terminal:create', async (event, options) => {
+  try {
+    // 确定要使用的shell
+    let shellCommand = options.shell;
+    if (!shellCommand) {
+      if (process.platform === 'win32') {
+        shellCommand = 'powershell.exe';
+      } else {
+        shellCommand = process.env.SHELL || '/bin/bash';
+      }
+    }
+    
+    // 创建子进程
+    const childProcess = spawn(shellCommand, [], {
+      cwd: options.cwd || process.cwd(),
+      env: process.env,
+      shell: true
+    });
+    
+    // 生成唯一ID
+    const id = `terminal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 存储终端进程
+    terminals.set(id, childProcess);
+    
+    // 监听数据输出
+    childProcess.stdout.on('data', (data) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('terminal:data', { id, data: data.toString() });
+      }
+    });
+    
+    childProcess.stderr.on('data', (data) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('terminal:data', { id, data: data.toString() });
+      }
+    });
+    
+    // 监听进程退出
+    childProcess.on('exit', (code) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('terminal:exit', { id, exitCode: code });
+      }
+      terminals.delete(id);
+    });
+    
+    // 监听进程错误
+    childProcess.on('error', (error) => {
+      console.error(`Terminal process error for ${id}:`, error);
+      if (mainWindow) {
+        mainWindow.webContents.send('terminal:data', { id, data: `Error: ${error.message}\r\n` });
+      }
+    });
+    
+    return { id, success: true };
+  } catch (error) {
+    console.error('Failed to create terminal:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('terminal:write', (event, id, data) => {
+  const childProcess = terminals.get(id);
+  if (childProcess) {
+    try {
+      childProcess.stdin.write(data);
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to write to terminal ${id}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+  return { success: false, error: 'Terminal not found' };
+});
+
+ipcMain.handle('terminal:kill', (event, id) => {
+  const childProcess = terminals.get(id);
+  if (childProcess) {
+    try {
+      childProcess.kill();
+      terminals.delete(id);
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to kill terminal ${id}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+  return { success: false, error: 'Terminal not found' };
+});
+
+// 添加MCP服务器管理功能
+ipcMain.handle('mcp-server:start', async () => {
+  try {
+    // 检查Python环境
+    const pythonCheck = await new Promise((resolve) => {
+      exec('python --version', (error, stdout, stderr) => {
+        if (error) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+    
+    if (!pythonCheck) {
+      return { success: false, error: 'Python environment not found' };
+    }
+    
+    // 检查MCP服务器文件是否存在
+    const serverPath = path.join(__dirname, '../mcp-server/main.py');
+    if (!fs.existsSync(serverPath)) {
+      return { success: false, error: 'MCP server file not found' };
+    }
+    
+    // 启动MCP服务器
+    const mcpProcess = spawn('python', [serverPath], {
+      cwd: path.join(__dirname, '../mcp-server'),
+      env: process.env
+    });
+    
+    // 存储MCP服务器进程
+    terminals.set('mcp-server', mcpProcess);
+    
+    // 监听输出
+    mcpProcess.stdout.on('data', (data) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('mcp-server:output', { data: data.toString() });
+      }
+    });
+    
+    mcpProcess.stderr.on('data', (data) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('mcp-server:output', { data: data.toString() });
+      }
+    });
+    
+    // 监听进程退出
+    mcpProcess.on('exit', (code) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('mcp-server:exit', { exitCode: code });
+      }
+      terminals.delete('mcp-server');
+    });
+    
+    // 监听进程错误
+    mcpProcess.on('error', (error) => {
+      console.error('MCP server process error:', error);
+      if (mainWindow) {
+        mainWindow.webContents.send('mcp-server:output', { data: `Error: ${error.message}\r\n` });
+      }
+    });
+    
+    return { success: true, message: 'MCP server started successfully' };
+  } catch (error) {
+    console.error('Failed to start MCP server:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('mcp-server:stop', () => {
+  const mcpProcess = terminals.get('mcp-server');
+  if (mcpProcess) {
+    try {
+      mcpProcess.kill();
+      terminals.delete('mcp-server');
+      return { success: true, message: 'MCP server stopped successfully' };
+    } catch (error) {
+      console.error('Failed to stop MCP server:', error);
+      return { success: false, error: error.message };
+    }
+  }
+  return { success: false, error: 'MCP server not running' };
 });
