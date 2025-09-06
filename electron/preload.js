@@ -19,7 +19,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createTerminal: (options) => ipcRenderer.invoke('terminal:create', options),
   writeTerminal: (id, data) => ipcRenderer.invoke('terminal:write', id, data),
   killTerminal: (id) => ipcRenderer.invoke('terminal:kill', id),
-  resizeTerminal: (id, cols, rows) => ipcRenderer.invoke('terminal:resize', id, cols, rows),
   onTerminalData: (callback) => ipcRenderer.on('terminal:data', callback),
   onTerminalExit: (callback) => ipcRenderer.on('terminal:exit', callback),
   

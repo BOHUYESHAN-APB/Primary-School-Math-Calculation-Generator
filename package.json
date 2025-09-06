@@ -11,7 +11,8 @@
     "windows:prepare": "npm run build && electron-builder install-app-deps",
     "windows:build": "npm run build && electron-builder --win",
     "windows:build-msi": "npm run build && electron-builder --win msi",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "electron:build": "npm run build && electron-builder --win"
   },
   "main": "electron/main.js",
   "devDependencies": {

@@ -1,18 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getTranslation } from '@/lib/i18n';
+import { MathQuestion } from '@/lib/math-generator';
 import { AIAnalysisComponent } from './ai-analysis';
 import { Button } from './ui/button';
 import { Bot } from 'lucide-react';
 import { Collapsible, CollapsibleContent } from './ui/collapsible';
 
+
 interface QuestionPreviewProps {
-  questions: any[];
+  questions: MathQuestion[];
   showAnswers?: boolean;
   currentLanguage: string;
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
-
-const QuestionPreview = ({ questions, showAnswers = false, currentLanguage }: QuestionPreviewProps) => {
+ 
+const QuestionPreview = ({ questions, showAnswers = false, currentLanguage, onSelectionChange }: QuestionPreviewProps) => {
   const [showAIAnalysis, setShowAIAnalysis] = useState<{ [key: string]: boolean }>({});
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+ 
+  useEffect(() => {
+    if (onSelectionChange) onSelectionChange(selectedIds);
+  }, [selectedIds, onSelectionChange]);
+ 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
   
   if (!questions || questions.length === 0) {
     return (
@@ -57,8 +69,17 @@ const QuestionPreview = ({ questions, showAnswers = false, currentLanguage }: Qu
         {questions.map((question, index) => (
           <div key={question.id} className="bg-white rounded-lg shadow p-4 border border-gray-200">
             <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium text-gray-700">{index + 1}. {question.expression} = </span>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(question.id)}
+                    onChange={() => toggleSelect(question.id)}
+                    className="h-4 w-4"
+                    aria-label={`select-question-${question.id}`}
+                  />
+                  <span className="font-medium text-gray-700">{index + 1}. {question.expression} = </span>
+                </div>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getDifficultyColor(question.difficulty)}`}>
                   {getTranslation('difficulty', currentLanguage)} {getTranslation(getDifficultyTranslationKey(question.difficulty), currentLanguage)}
                 </span>
@@ -70,8 +91,8 @@ const QuestionPreview = ({ questions, showAnswers = false, currentLanguage }: Qu
                 </span>
                 {question.isVerified !== undefined && (
                   <span className={`px-2 py-1 rounded text-xs font-medium ${question.verificationResult ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {question.verificationResult 
-                      ? getTranslation('verifiedCorrect', currentLanguage) 
+                    {question.verificationResult
+                      ? getTranslation('verifiedCorrect', currentLanguage)
                       : getTranslation('verifiedIncorrect', currentLanguage)}
                   </span>
                 )}

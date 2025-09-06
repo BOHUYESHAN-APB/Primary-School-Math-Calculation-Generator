@@ -39,7 +39,17 @@ export function AIAnalysisComponent({ question, language }: AIAnalysisComponentP
       setAnalysis(analysisResult);
     } catch (error) {
       console.error('AI分析失败:', error);
-      setError(error instanceof Error ? error.message : 'AI分析失败');
+      let errorMessage = 'AI分析失败';
+      if (error instanceof Error) {
+        if (error.message.includes('AI服务不可用')) {
+          errorMessage = `${error.message}，请确保已启动"启动MCP服务器.bat"`;
+        } else if (error.message.includes('无法连接到AI服务')) {
+          errorMessage = `${error.message}，请检查网络连接和MCP服务器状态`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
     }

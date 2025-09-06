@@ -399,7 +399,7 @@ export function AboutPage({ language }: AboutPageProps) {
               <div className="p-3 bg-muted rounded-lg">
                 <div className="text-sm font-medium">{t.nodeVersion}</div>
                 <div className="text-xs text-muted-foreground font-mono">
-                  {(import.meta as any).env?.VITE_NODE_VERSION || 'v18+'}
+                  {(import.meta as unknown as { env?: Record<string, string> }).env?.VITE_NODE_VERSION || 'v18+'}
                 </div>
               </div>
               
@@ -413,7 +413,7 @@ export function AboutPage({ language }: AboutPageProps) {
               <div className="p-3 bg-muted rounded-lg">
                 <div className="text-sm font-medium">Environment</div>
                 <div className="text-xs text-muted-foreground font-mono">
-                  {(import.meta as any).env?.MODE || 'development'}
+                  {(import.meta as unknown as { env?: Record<string, string> }).env?.MODE || 'development'}
                 </div>
               </div>
             </div>

@@ -106,6 +106,16 @@ python main.py
 .\启动本地应用.bat
 ```
 
+### 构建并测试应用
+
+```bash
+# 构建并测试应用
+.\构建并测试.bat
+
+# 启动构建后的应用进行测试
+.\测试构建应用.bat
+```
+
 ## 构建Windows应用
 
 ### 构建要求
@@ -124,6 +134,9 @@ npm run windows:build
 
 # 构建MSI安装包
 npm run windows:build-msi
+
+# 或使用简化命令构建
+npm run electron:build
 ```
 
 详细构建指南请参阅[Windows应用构建指南.md](Windows应用构建指南.md)文件。

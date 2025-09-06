@@ -38,11 +38,12 @@ function App() {
   };
 
   // 修复Tabs onValueChange的类型问题
+  function isTabValue(v: string): v is 'main' | 'settings' | 'server' {
+    return ['main', 'settings', 'server'].includes(v);
+  }
   const handleTabChange = (value: string) => {
-    // 确保值是正确的类型
-    const validValues: ('main' | 'settings' | 'server')[] = ['main', 'settings', 'server'];
-    if (validValues.includes(value as any)) {
-      setCurrentPage(value as any);
+    if (isTabValue(value)) {
+      setCurrentPage(value);
     }
   };
 
@@ -50,6 +51,8 @@ function App() {
     <div className="flex flex-col h-screen bg-background">
       <TitleBar 
         title={getTranslation('appTitle', currentLanguage)}
+        currentLanguage={currentLanguage}
+        onLanguageChange={handleLanguageChange}
       />
       
       <div className="flex-1 overflow-hidden">

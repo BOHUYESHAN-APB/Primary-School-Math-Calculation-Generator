@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { FileText } from 'lucide-react';
+import { SemanticIcon } from '@/components/semantic-icon';
+import { getTranslation } from '@/lib/i18n';
+import { MathQuestion } from '@/lib/math-generator';
 
 interface ExportOptions {
   layout: 'side-by-side' | 'question-first' | 'answer-first';
@@ -18,20 +20,42 @@ interface ExportOptions {
 interface HTMLExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  questions: any[];
+  questions: MathQuestion[];
+  originalCount?: number;
+  selectedCount?: number;
+  language: string;
 }
 
-export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDialogProps) {
+function replaceParams(str: string, params: Record<string, string | number>) {
+  return Object.keys(params).reduce(
+    (acc, k) => acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
+    str
+  );
+}
+
+export function HTMLExportDialog({ open, onOpenChange, questions, originalCount, selectedCount, language }: HTMLExportDialogProps) {
   const [options, setOptions] = useState<ExportOptions>({
     layout: 'side-by-side',
     includeSteps: true,
     showQuestionNumbers: true,
-    title: '小学数学练习题',
-    subject: '数学题目'
+    title: getTranslation('defaultHTMLTitle', language),
+    subject: getTranslation('defaultSubjectTitle', language)
   });
 
+  const t = (k: string) => getTranslation(k, language);
+
+  const buildRangeDescription = () => {
+    if (originalCount !== undefined && selectedCount !== undefined) {
+      if (selectedCount > 0) {
+        return replaceParams(t('exportSelectedRange'), { selected: selectedCount, total: originalCount });
+      }
+      return replaceParams(t('exportAllRange'), { total: originalCount });
+    }
+    return replaceParams(t('exportTotalCount'), { count: questions.length });
+  };
+  const rangeDescription = buildRangeDescription();
+
   const handleExport = () => {
-    // 简单的HTML导出实现
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -56,30 +80,37 @@ export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDi
           </div>
           
           <div class="questions">
-            ${questions.map((question, index) => `
+            ${questions
+              .map(
+                (question, index) => `
               <div class="question">
                 ${options.showQuestionNumbers ? `<strong>${index + 1}.</strong> ` : ''}
                 ${question.expression}
               </div>
               <div class="answer">
-                <strong>答案:</strong> ${question.answer}
-                ${options.includeSteps && question.steps ? `
+                <strong>${t('answer')}:</strong> ${question.answer}
+                ${
+                  options.includeSteps && question.steps
+                    ? `
                   <div class="steps">
-                    <strong>解题步骤:</strong>
+                    <strong>${t('steps')}:</strong>
                     <ol>
                       ${question.steps.map((step: string) => `<li>${step}</li>`).join('')}
                     </ol>
                   </div>
-                ` : ''}
+                `
+                    : ''
+                }
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         </div>
       </body>
       </html>
     `;
 
-    // 创建下载链接
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -89,7 +120,6 @@ export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDi
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
     onOpenChange(false);
   };
 
@@ -97,75 +127,75 @@ export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>HTML导出设置</DialogTitle>
-          <DialogDescription>
-            自定义HTML文档的格式和内容，共{questions.length}道题目
+          <DialogTitle className="flex items-center gap-2">
+            <SemanticIcon name="export" className="w-5 h-5" />
+            {t('htmlExportSettings')}
+          </DialogTitle>
+          <DialogDescription className="space-y-1">
+            <div>{t('htmlExportCustomize')}</div>
+            <div className="text-xs font-medium text-blue-600">{rangeDescription}</div>
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          {/* 文档标题 */}
           <div className="grid gap-2">
-            <Label htmlFor="title">文档标题</Label>
+            <Label htmlFor="title">{t('documentTitle')}</Label>
             <Input
               id="title"
               value={options.title}
               onChange={(e) => setOptions({ ...options, title: e.target.value })}
-              placeholder="请输入文档标题"
+              placeholder={t('documentTitlePlaceholder')}
             />
           </div>
 
-          {/* 科目名称 */}
-          <div className="grid gap-2">
-            <Label htmlFor="subject">科目名称</Label>
+            <div className="grid gap-2">
+            <Label htmlFor="subject">{t('subjectName')}</Label>
             <Input
               id="subject"
               value={options.subject}
               onChange={(e) => setOptions({ ...options, subject: e.target.value })}
-              placeholder="请输入科目名称"
+              placeholder={t('subjectNamePlaceholder')}
             />
           </div>
 
-          {/* 布局方式 */}
           <div className="grid gap-2">
-            <Label>题目和答案布局</Label>
+            <Label>{t('qaLayout')}</Label>
             <RadioGroup
               value={options.layout}
-              onValueChange={(value: ExportOptions['layout']) => 
+              onValueChange={(value: ExportOptions['layout']) =>
                 setOptions({ ...options, layout: value })
               }
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="side-by-side" id="side-by-side" />
                 <Label htmlFor="side-by-side" className="cursor-pointer">
-                  左右分栏（题目和答案并排显示）
+                  {t('layoutSideBySide')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="question-first" id="question-first" />
                 <Label htmlFor="question-first" className="cursor-pointer">
-                  前题后答（先显示所有题目，再显示所有答案）
+                  {t('layoutQuestionFirst')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="answer-first" id="answer-first" />
                 <Label htmlFor="answer-first" className="cursor-pointer">
-                  前答后题（先显示所有答案，再显示所有题目）
+                  {t('layoutAnswerFirst')}
                 </Label>
               </div>
             </RadioGroup>
           </div>
 
-          {/* 其他选项 */}
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="show-numbers" className="cursor-pointer">
-                显示题号
+                {t('showQuestionNumbers')}
               </Label>
               <Switch
                 id="show-numbers"
                 checked={options.showQuestionNumbers}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setOptions({ ...options, showQuestionNumbers: checked })
                 }
               />
@@ -173,12 +203,12 @@ export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDi
 
             <div className="flex items-center justify-between">
               <Label htmlFor="include-steps" className="cursor-pointer">
-                包含解题步骤
+                {t('includeSolutionSteps')}
               </Label>
               <Switch
                 id="include-steps"
                 checked={options.includeSteps}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setOptions({ ...options, includeSteps: checked })
                 }
               />
@@ -188,11 +218,11 @@ export function HTMLExportDialog({ open, onOpenChange, questions }: HTMLExportDi
 
         <div className="flex justify-end space-x-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
+            {t('cancel')}
           </Button>
           <Button onClick={handleExport}>
-            <FileText className="h-4 w-4 mr-2" />
-            生成HTML文档
+            <SemanticIcon name="export" className="h-4 w-4 mr-2" />
+            {t('generateHTMLDoc')}
           </Button>
         </div>
       </DialogContent>

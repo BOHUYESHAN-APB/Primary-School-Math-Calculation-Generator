@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
+import type { ToastProps } from "@/components/ui/toast";
 import {
   Toast,
   ToastClose,
@@ -15,9 +16,9 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }: any) {
+      {toasts.map(function ({ id, title, description, action, ...props }: ToastProps & { id: string; action?: React.ReactNode; title?: React.ReactNode; description?: React.ReactNode }) {
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...(props as ToastProps)}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

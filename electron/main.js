@@ -90,8 +90,9 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     
-    // 用户需要手动运行 "启动MCP服务器.bat" 来启动服务器
-    console.log('ℹ️ 请手动运行"启动MCP服务器.bat"来启动AI服务');
+    // 自动启动MCP服务器
+    console.log('ℹ️ 正在启动MCP服务器...');
+    ipcMain.emit('mcp-server:start');
   });
 
   // 当窗口关闭时触发
@@ -354,6 +355,7 @@ ipcMain.handle('terminal:kill', (event, id) => {
   }
   return { success: false, error: 'Terminal not found' };
 });
+
 
 // 添加MCP服务器管理功能
 ipcMain.handle('mcp-server:start', async () => {

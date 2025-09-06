@@ -10,22 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { exportToPDF } from '@/lib/pdf-exporter';
+import { exportToWord } from '@/lib/word-exporter';
 import { SemanticIcon } from '@/components/semantic-icon';
 import { getTranslation } from '@/lib/i18n';
+import { MathQuestion } from '@/lib/math-generator';
 
-interface Question {
-  expression: string;
-  answer: number | string;
-  steps?: string[];
-  difficulty?: number;
-  knowledgePoint?: string;
-}
-
-interface PDFExportDialogProps {
+interface WordExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  questions: Question[];
+  questions: MathQuestion[];
   originalCount?: number;
   selectedCount?: number;
   language: string;
@@ -33,22 +26,22 @@ interface PDFExportDialogProps {
 
 function replaceParams(str: string, params: Record<string, string | number>) {
   return Object.keys(params).reduce(
-    (acc, k) => acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
+    (acc, key) => acc.replace(new RegExp(`\\{${key}\\}`, 'g'), String(params[key])),
     str
   );
 }
 
-export function PDFExportDialog({
+export function WordExportDialog({
   open,
   onOpenChange,
   questions,
   originalCount,
   selectedCount,
   language
-}: PDFExportDialogProps) {
+}: WordExportDialogProps) {
   const t = (k: string) => getTranslation(k, language);
   const [isExporting, setIsExporting] = useState(false);
-  const [title, setTitle] = useState(getTranslation('defaultPDFTitle', language));
+  const [title, setTitle] = useState(getTranslation('defaultWordTitle', language));
 
   const buildRangeDescription = () => {
     if (originalCount !== undefined && selectedCount !== undefined) {
@@ -61,18 +54,15 @@ export function PDFExportDialog({
   };
   const rangeDescription = buildRangeDescription();
 
-  const summary = replaceParams(
-    t('pdfExportSummary'),
-    { count: questions.length }
-  );
+  const summary = replaceParams(t('wordExportSummary'), { count: questions.length });
 
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      await exportToPDF(questions, title);
+      await exportToWord(questions, title);
     } catch (error) {
-      console.error('PDF export failed:', error);
-      // 仅记录日志，未来可加入 toast i18n 提示
+      console.error('Word export failed:', error);
+      // TODO: 未来加入 toast 错误提示并 i18n
     } finally {
       setIsExporting(false);
       onOpenChange(false);
@@ -85,10 +75,10 @@ export function PDFExportDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SemanticIcon name="export" className="w-5 h-5" />
-            {t('exportPDFButton')}
+            {t('exportWordButton')}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="text-xs font-medium text-blue-600 px-1">
             {rangeDescription}
@@ -130,7 +120,7 @@ export function PDFExportDialog({
             ) : (
               <>
                 <SemanticIcon name="export" className="mr-2 h-4 w-4" />
-                {t('exportPDFButton')}
+                {t('exportWordButton')}
               </>
             )}
           </Button>

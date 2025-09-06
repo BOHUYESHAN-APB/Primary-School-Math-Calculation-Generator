@@ -17,14 +17,21 @@ export function LanguageSelector({ onLanguageChange, currentLanguage }: Language
   const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage);
 
   useEffect(() => {
-    // Load saved language or detect browser language
+    // Load saved language or detect browser language on initial load
     const savedLanguage = loadLanguageFromStorage();
-    const browserLanguage = detectBrowserLanguage();
-    const initialLanguage = savedLanguage || browserLanguage;
-    
-    setSelectedLanguage(initialLanguage);
-    onLanguageChange(initialLanguage);
+    if (!savedLanguage) {
+      const browserLanguage = detectBrowserLanguage();
+      setSelectedLanguage(browserLanguage);
+      onLanguageChange(browserLanguage);
+    }
   }, [onLanguageChange]);
+ 
+  useEffect(() => {
+    // Sync with external language changes
+    if (currentLanguage !== selectedLanguage) {
+      setSelectedLanguage(currentLanguage);
+    }
+  }, [currentLanguage, selectedLanguage]);
 
   const handleLanguageChange = (value: string) => {
     setSelectedLanguage(value);

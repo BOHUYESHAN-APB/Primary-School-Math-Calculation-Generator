@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Separator } from './ui/separator';
 import { Alert, AlertDescription } from './ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  Settings, 
-  Palette, 
-  Database, 
-  Save, 
+import {
+  Settings,
+  Palette,
+  Database,
+  Save,
   RotateCcw,
   CheckCircle,
   AlertCircle,
@@ -21,7 +21,8 @@ import {
 import { configManager, ConfigData } from '../lib/config-manager';
 import { AISettings } from './ai-settings';
 import { TerminalManager } from './terminal-manager';
-
+import { getSupportedLanguages } from '../lib/i18n';
+import { IconStyleToggle } from './semantic-icon';
 interface SettingsPageProps {
   language: string;
   onLanguageChange: (lang: string) => void;
@@ -169,11 +170,7 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
 
   const t = texts[language as keyof typeof texts] || texts['zh-CN'];
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -186,7 +183,11 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const saveSettings = async () => {
     try {
@@ -365,8 +366,11 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="zh-CN">中文（简体）</SelectItem>
-                    <SelectItem value="en-US">English</SelectItem>
+                    {getSupportedLanguages().map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -386,9 +390,28 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
                   </SelectContent>
                 </Select>
               </div>
-
+              
               <Separator />
 
+              <div>
+                <Label>{language === 'zh-CN' ? '图标风格' : 'Icon Style'}</Label>
+                <div className="mt-2">
+                  <IconStyleToggle
+                    labels={{
+                      lucide: language === 'zh-CN' ? '线性图标' : 'Lucide',
+                      emoji: 'Emoji'
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === 'zh-CN'
+                    ? '切换 Emoji 与线性 (Lucide) 图标展示方式'
+                    : 'Toggle between Emoji and Lucide icon styles'}
+                </p>
+              </div>
+
+              <Separator />
+ 
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="animations">{t.animations}</Label>
@@ -397,10 +420,11 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
                 <Switch
                   id="animations"
                   checked={localSettings.animationEnabled}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setLocalSettings(prev => ({ ...prev, animationEnabled: checked }))
                   }
-                />              </div>
+                />
+              </div>
             </CardContent>
               </Card>
             </TabsContent>

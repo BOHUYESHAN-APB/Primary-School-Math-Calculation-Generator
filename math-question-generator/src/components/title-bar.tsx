@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Minus, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Minus, X, Maximize2, Minimize2, Languages } from 'lucide-react';
+import { getSupportedLanguages } from '@/lib/i18n';
 
 interface TitleBarProps {
   title?: string;
+  currentLanguage?: string;
+  onLanguageChange?: (lang: string) => void;
 }
 
-export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps) {
+export function TitleBar({ 
+  title = "数字芽算（MathBud）",
+  currentLanguage = 'zh-CN',
+  onLanguageChange 
+}: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isElectron, setIsElectron] = useState(false);
 
@@ -43,6 +50,17 @@ export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps)
     }
   };
 
+  const handleLanguageToggle = () => {
+    if (onLanguageChange) {
+      // 获取支持的语言列表
+      const supportedLanguages = getSupportedLanguages();
+      const currentIndex = supportedLanguages.findIndex(lang => lang.code === currentLanguage);
+      const nextIndex = (currentIndex + 1) % supportedLanguages.length;
+      const newLanguage = supportedLanguages[nextIndex].code;
+      onLanguageChange(newLanguage);
+    }
+  };
+
   // 如果不在 Electron 环境中，不显示标题栏
   if (!isElectron) {
     return null;
@@ -57,6 +75,19 @@ export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps)
           <span className="text-white text-xs font-bold app-drag-region">数</span>
         </div>
         <span className="text-sm font-medium text-gray-700 truncate app-drag-region">{title}</span>
+      </div>
+
+      {/* 中间：语言切换按钮 */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 app-no-drag">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 hover:bg-gray-100/70 rounded-full transition-colors"
+          onClick={handleLanguageToggle}
+          title={currentLanguage === 'zh-CN' ? '切换到 English' : 'Switch to 中文'}
+        >
+          <Languages className="h-4 w-4 text-gray-600" />
+        </Button>
       </div>
 
       {/* 右侧：窗口控制按钮 - 设置为不可拖动 */}
@@ -99,32 +130,4 @@ export function TitleBar({ title = "数字芽算（MathBud）" }: TitleBarProps)
   );
 }
 
-// 类型定义扩展
-declare global {
-  interface Window {
-    electronAPI?: {
-      // 窗口控制方法
-      minimize: () => void;
-      maximize: () => void;
-      unmaximize: () => void;
-      close: () => void;
-      isMaximized: () => Promise<boolean>;
-      
-      // 终端管理方法
-      createTerminal: (options: any) => Promise<any>;
-      writeTerminal: (id: string, data: string) => Promise<any>;
-      killTerminal: (id: string) => Promise<any>;
-      resizeTerminal?: (id: string, cols: number, rows: number) => Promise<any>;
-      onTerminalData: (callback: (event: any, data: any) => void) => void;
-      onTerminalExit: (callback: (event: any, data: any) => void) => void;
-      removeAllListeners: (channel: string) => void;
-      
-      // 其他方法
-      getAppVersion: () => Promise<string>;
-      showItemInFolder: (fullPath: string) => Promise<void>;
-      onMenuAction: (callback: (event: any, action: string) => void) => void;
-      platform: string;
-      isElectron: boolean;
-    };
-  }
-}
+// 全局 window.electronAPI 类型已在统一的 [electron-api.d.ts](math-question-generator/src/types/electron-api.d.ts) 中定义，此处移除重复声明以避免 TS2717 冲突

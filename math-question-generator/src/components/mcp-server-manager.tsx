@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Play, Square, RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
-import { EmbeddedTerminal } from './embedded-terminal';
 
 interface ServerStatus {
   status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error';
@@ -12,43 +11,48 @@ interface ServerStatus {
   errorMessage?: string;
 }
 
-// 扩展Window接口以包含electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      // 窗口控制方法
-      minimize: () => void;
-      maximize: () => void;
-      unmaximize: () => void;
-      close: () => void;
-      isMaximized: () => Promise<boolean>;
-      
-      // 终端管理方法
-      createTerminal: (options: any) => Promise<any>;
-      writeTerminal: (id: string, data: string) => Promise<any>;
-      killTerminal: (id: string) => Promise<any>;
-      resizeTerminal?: (id: string, cols: number, rows: number) => Promise<any>;
-      onTerminalData: (callback: (event: any, data: any) => void) => void;
-      onTerminalExit: (callback: (event: any, data: any) => void) => void;
-      removeAllListeners: (channel: string) => void;
-      
-      // 其他方法
-      getAppVersion: () => Promise<string>;
-      showItemInFolder: (fullPath: string) => Promise<void>;
-      onMenuAction: (callback: (event: any, action: string) => void) => void;
-      platform: string;
-      isElectron: boolean;
-    };
-  }
-}
+/* 全局类型已在全局类型声明文件中提供，此处不再重复声明，以避免重复合并冲突 */
 
 export function MCPServerManager({ language }: { language: string }) {
   const [serverStatus, setServerStatus] = useState<ServerStatus>({
     status: 'stopped',
     lastUpdate: new Date()
   });
-  
+
   const [showTerminal, setShowTerminal] = useState(false);
+  const [serverOutput, setServerOutput] = useState<string[]>([]);
+
+  // 监听主进程输出与退出
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api) return;
+
+    const outputHandler = (_e: unknown, payload: { data: string }) => {
+      if (payload && typeof payload.data === 'string') {
+        const line = payload.data;
+        setServerOutput(prev => {
+          const next = [...prev, line];
+          return next.length > 500 ? next.slice(-500) : next;
+        });
+      }
+    };
+
+    const exitHandler = () => {
+      setServerStatus(s => ({
+        ...s,
+        status: 'stopped',
+        lastUpdate: new Date()
+      }));
+    };
+
+    api.onMCPServerOutput?.(outputHandler);
+    api.onMCPServerExit?.(exitHandler);
+
+    return () => {
+      api?.removeAllListeners?.('mcp-server:output');
+      api?.removeAllListeners?.('mcp-server:exit');
+    };
+  }, []);
 
   const texts = {
     'zh-CN': {
@@ -109,77 +113,81 @@ export function MCPServerManager({ language }: { language: string }) {
 
   const t = texts[language as keyof typeof texts] || texts['zh-CN'];
 
-  // 启动MCP服务器
+  // 启动MCP服务器（真实调用 IPC）
   const startServer = async () => {
     if (serverStatus.status === 'running' || serverStatus.status === 'starting') {
       console.log(t.serverAlreadyRunning);
       return;
     }
-
-    setServerStatus(prev => ({ ...prev, status: 'starting', lastUpdate: new Date() }));
-    
-    try {
-      // 检查electronAPI是否存在
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available');
-      }
-      
-      // 调用Electron主进程启动MCP服务器
-      // 注意：我们不再使用startMCPServer方法，而是使用终端管理方式
-      console.log('MCP服务器应该通过终端方式启动');
-      setServerStatus({
-        status: 'running',
-        pid: Math.floor(Math.random() * 10000) + 1000,
-        lastUpdate: new Date()
-      });
-      // 自动显示终端
-      setShowTerminal(true);
-      console.log(t.startServerSuccess);
-    } catch (error) {
-      console.error('Failed to start MCP server:', error);
+    const api = window.electronAPI;
+    if (!api?.startMCPServer) {
       setServerStatus({
         status: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
+        errorMessage: 'Electron API 不可用'
       });
-      console.error(t.startServerError);
+      return;
+    }
+
+    setServerStatus({ status: 'starting', lastUpdate: new Date() });
+
+    try {
+      const res = await api.startMCPServer();
+      if (res?.success) {
+        setServerStatus({ status: 'running', lastUpdate: new Date() });
+        setShowTerminal(true);
+      } else {
+        setServerStatus({
+          status: 'error',
+          lastUpdate: new Date(),
+          errorMessage: res?.error || t.startServerError
+        });
+      }
+    } catch (e: unknown) {
+      setServerStatus({
+        status: 'error',
+        lastUpdate: new Date(),
+        errorMessage: (e as Error).message || t.startServerError
+      });
     }
   };
 
-  // 停止MCP服务器
+  // 停止MCP服务器（真实调用 IPC）
   const stopServer = async () => {
     if (serverStatus.status === 'stopped' || serverStatus.status === 'stopping') {
       console.log(t.serverNotRunning);
       return;
     }
-
-    setServerStatus(prev => ({ ...prev, status: 'stopping', lastUpdate: new Date() }));
-    
-    try {
-      // 检查electronAPI是否存在
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available');
-      }
-      
-      // 调用Electron主进程停止MCP服务器
-      // 注意：我们不再使用stopMCPServer方法，而是使用终端管理方式
-      console.log('MCP服务器应该通过终端方式停止');
+    const api = window.electronAPI;
+    if (!api?.stopMCPServer) {
       setServerStatus({
-        status: 'stopped',
-        lastUpdate: new Date()
+        status: 'error',
+        lastUpdate: new Date(),
+        errorMessage: 'Electron API 不可用'
       });
-      // 自动隐藏终端
-      setShowTerminal(false);
-      console.log(t.stopServerSuccess);
-    } catch (error) {
-      console.error('Failed to stop MCP server:', error);
-      setServerStatus(prev => ({ 
-        ...prev, 
-        status: 'error', 
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        lastUpdate: new Date() 
-      }));
-      console.error(t.stopServerError);
+      return;
+    }
+
+    setServerStatus({ status: 'stopping', lastUpdate: new Date() });
+
+    try {
+      const res = await api.stopMCPServer();
+      if (res?.success) {
+        setServerStatus({ status: 'stopped', lastUpdate: new Date(), pid: undefined });
+        setShowTerminal(false);
+      } else {
+        setServerStatus({
+          status: 'error',
+          lastUpdate: new Date(),
+          errorMessage: res?.error || t.stopServerError
+        });
+      }
+    } catch (e: unknown) {
+      setServerStatus({
+        status: 'error',
+        lastUpdate: new Date(),
+        errorMessage: (e as Error).message || t.stopServerError
+      });
     }
   };
 
@@ -290,7 +298,9 @@ export function MCPServerManager({ language }: { language: string }) {
             <div className="bg-gray-800 text-white px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4" />
-                <span className="font-mono text-sm">{t.terminalView}: {language === 'zh-CN' ? '🔢 MCP服务器终端' : '🔢 MCP Server Terminal'}</span>
+                <span className="font-mono text-sm">
+                  {t.terminalView}: {language === 'zh-CN' ? '🔢 MCP服务器日志' : '🔢 MCP Server Log'}
+                </span>
               </div>
               <Button
                 size="sm"
@@ -301,13 +311,14 @@ export function MCPServerManager({ language }: { language: string }) {
                 {t.closeTerminal}
               </Button>
             </div>
-            <div className="h-64">
-              <EmbeddedTerminal 
-                id="mcp-server-terminal"
-                name={language === 'zh-CN' ? '🔢 MCP服务器终端' : '🔢 MCP Server Terminal'}
-                cwd="./mcp-server"
-                shell={process.platform === 'win32' ? 'python.exe' : 'python3'}
-              />
+            <div className="h-64 bg-black text-white font-mono text-xs p-2 overflow-auto whitespace-pre-wrap">
+              {serverOutput.length === 0 ? (
+                <div className="text-gray-400">
+                  {language === 'zh-CN' ? '暂无输出' : 'No output yet'}
+                </div>
+              ) : (
+                serverOutput.map((line, i) => <div key={i}>{line}</div>)
+              )}
             </div>
           </div>
         )}

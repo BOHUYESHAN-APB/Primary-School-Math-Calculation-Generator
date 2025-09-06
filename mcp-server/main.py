@@ -128,12 +128,13 @@ async def analyze_math_question_with_ai(question: MathQuestion, language: str = 
     effective_config = get_effective_ai_config()
     
     if not effective_config["api_key"]:
-        return {"error": "AI API Key 未配置"}
+        return {"error": "AI API Key 未配置，请在配置文件或环境变量中设置AI_API_KEY"}
     
     # 构造提示词
     prompt = create_analysis_prompt(question, language, detail_level)
     
     try:
+        print(f"正在使用模型 {effective_config['model']} 分析题目: {question.expression}")
         async with httpx.AsyncClient(timeout=effective_config["timeout"]) as client:
             response = await client.post(
                 f"{effective_config['api_base']}/v1/chat/completions",
@@ -159,17 +160,30 @@ async def analyze_math_question_with_ai(question: MathQuestion, language: str = 
             )
             
             if response.status_code != 200:
-                return {"error": f"AI API 请求失败: {response.status_code}"}
+                error_text = await response.aread()
+                print(f"AI API请求失败: {response.status_code} - {error_text}")
+                return {"error": f"AI API 请求失败: {response.status_code} - {error_text.decode('utf-8')}"}
             
             result = response.json()
             ai_response = result.get("choices", [{}])[0].get("message", {}).get("content", "")
             
             # 解析AI响应并结构化
             analysis = parse_ai_response(ai_response, question)
+            print(f"AI分析完成，生成了 {len(analysis.solution_steps)} 个解题步骤")
             return {"analysis": analysis}
             
+    except httpx.TimeoutException:
+        error_msg = f"AI API请求超时 ({effective_config['timeout']}秒)，请稍后重试"
+        print(error_msg)
+        return {"error": error_msg}
+    except httpx.NetworkError as e:
+        error_msg = f"网络连接错误: {str(e)}"
+        print(error_msg)
+        return {"error": error_msg}
     except Exception as e:
-        return {"error": f"AI分析失败: {str(e)}"}
+        error_msg = f"AI分析失败: {str(e)}"
+        print(error_msg)
+        return {"error": error_msg}
 
 def create_analysis_prompt(question: MathQuestion, language: str, detail_level: str) -> str:
     """构造AI分析提示词"""
@@ -645,4 +659,4 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8002)

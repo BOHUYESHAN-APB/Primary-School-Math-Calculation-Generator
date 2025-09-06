@@ -219,8 +219,9 @@ export function AISettings({ language }: AISettingsProps) {
         type: result.success ? 'success' : 'error', 
         text: result.success ? t.testSuccess : `${t.testFailed}: ${result.error}` 
       });
-    } catch (error: any) {
-      setMessage({ type: 'error', text: `${t.testFailed}: ${error.message}` });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      setMessage({ type: 'error', text: `${t.testFailed}: ${errMsg}` });
     } finally {
       setTestingStatus(prev => ({ ...prev, [providerId]: false }));
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,11 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { BookOpen, Star, Zap, Settings, Globe, Hash, Shield } from 'lucide-react';
+import { SemanticIcon } from '@/components/semantic-icon';
 import { getTranslation } from '@/lib/i18n';
 import { GeneratorConfig } from '@/lib/math-generator';
 import { getGradePreset, getDifficultyModes, getSupportedGrades, DifficultyMode } from '@/lib/grade-presets';
-
 interface QuickStartProps {
   onConfigSelect: (config: GeneratorConfig) => void;
   onCustomMode: () => void;
@@ -23,7 +22,33 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyMode | null>(null);
   const [educationSystem, setEducationSystem] = useState<'domestic' | 'international'>('domestic');
   const [questionCount, setQuestionCount] = useState<number>(15);
+  const [decimalQuestionCount, setDecimalQuestionCount] = useState<number>(0);
+  const [fractionQuestionCount, setFractionQuestionCount] = useState<number>(0);
   const [autoVerifyAnswers, setAutoVerifyAnswers] = useState<boolean>(true); // 默认开启答案自检
+
+  // 校验与提示
+  const [validationMsg, setValidationMsg] = useState<string>('');
+  const [isValid, setIsValid] = useState<boolean>(true);
+
+  useEffect(() => {
+    const totalSpecial = decimalQuestionCount + fractionQuestionCount;
+    if (totalSpecial > questionCount) {
+      setIsValid(false);
+      setValidationMsg(
+        currentLanguage === 'zh-CN'
+          ? '❌ 小数题数 + 分数题数 不能超过总题数'
+          : '❌ Decimal + Fraction counts cannot exceed total questions'
+      );
+    } else {
+      setIsValid(true);
+      const remaining = questionCount - totalSpecial;
+      setValidationMsg(
+        currentLanguage === 'zh-CN'
+          ? `✅ 剩余 ${remaining} 道普通题目`
+          : `✅ ${remaining} regular questions remaining`
+      );
+    }
+  }, [questionCount, decimalQuestionCount, fractionQuestionCount, currentLanguage]);
 
   const supportedGrades = getSupportedGrades();
   const difficultyModes = getDifficultyModes().filter(mode => mode !== 'custom');
@@ -31,18 +56,19 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
   const getDifficultyIcon = (difficulty: DifficultyMode) => {
     switch (difficulty) {
       case 'easy':
-        return <Star className="w-4 h-4" />;
+        return <SemanticIcon name="difficultyEasy" className="w-4 h-4" />;
       case 'normal':
-        return <BookOpen className="w-4 h-4" />;
+        return <SemanticIcon name="difficultyNormal" className="w-4 h-4" />;
       case 'hard':
-        return <Zap className="w-4 h-4" />;
+        return <SemanticIcon name="difficultyHard" className="w-4 h-4" />;
       default:
         return null;
     }
   };
 
   const getDifficultyColor = (difficulty: DifficultyMode, isSelected: boolean) => {
-    const baseClasses = "cursor-pointer transition-all duration-200 min-h-[60px] flex items-center justify-center gap-2";
+    // 增加按下动画与过渡，提供即时反馈
+    const baseClasses = "cursor-pointer active:scale-95 transition-transform duration-150 min-h-[60px] flex items-center justify-center gap-2";
     
     if (!isSelected) {
       switch (difficulty) {
@@ -79,20 +105,35 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
   };
 
   const handleStartGeneration = () => {
+    if (!isValid) return;
     if (selectedGrade && selectedDifficulty) {
       const baseConfig = getGradePreset(selectedGrade, selectedDifficulty);
       if (baseConfig) {
-        // 应用用户自定义设置
         const customizedConfig: GeneratorConfig = {
           ...baseConfig,
           educationSystem,
-          questionCount,
-          autoVerifyAnswers
+            questionCount,
+          autoVerifyAnswers,
+          includeDecimals: decimalQuestionCount > 0 || baseConfig.includeDecimals,
+          decimalPlaces: baseConfig.decimalPlaces ?? 2,
+          includeFractions: fractionQuestionCount > 0 || baseConfig.includeFractions,
+          fractionQuestionCount
         };
         onConfigSelect(customizedConfig);
       }
     }
   };
+
+  const startDisabled = !selectedGrade || !selectedDifficulty || !isValid;
+  const startButtonText = (() => {
+    if (!selectedGrade || !selectedDifficulty) {
+      return currentLanguage === 'zh-CN' ? '请选择年级与难度' : 'Select grade & difficulty';
+    }
+    if (!isValid) {
+      return currentLanguage === 'zh-CN' ? '修正上方输入' : 'Fix input above';
+    }
+    return currentLanguage === 'zh-CN' ? '开始生成题目' : 'Start Generating Questions';
+  })();
 
   const getGradeDescription = (grade: number) => {
     const descriptions = {
@@ -107,23 +148,23 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2 text-xl">
-          <BookOpen className="w-6 h-6" />
+    <Card className="w-full shadow-md border border-blue-100">
+      <CardHeader className="text-center bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 rounded-t-lg">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl font-semibold text-blue-700">
+          <SemanticIcon name="quickStart" className="w-6 h-6 text-blue-600" />
           {getTranslation('quickStart', currentLanguage)}
         </CardTitle>
-        <p className="text-sm text-gray-600 mt-2">
-          {currentLanguage === 'zh-CN' 
-            ? '选择年级和难度，快速开始练习' 
-            : 'Select grade and difficulty to start quickly'}
+        <p className="text-sm text-blue-600 mt-2">
+          {currentLanguage === 'zh-CN'
+            ? '选择年级与难度，一键生成适配练习'
+            : 'Choose grade & difficulty, generate instantly'}
         </p>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         {/* 教育体系选择 */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
+            <SemanticIcon name="educationSystem" className="w-4 h-4" />
             <h3 className="font-medium text-base">
               {getTranslation('educationSystem', currentLanguage)}
             </h3>
@@ -148,7 +189,7 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
         {/* 题目数量设定 */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Hash className="w-4 h-4" />
+            <SemanticIcon name="questionCount" className="w-4 h-4" />
             <Label className="font-medium text-base">
               {getTranslation('questionCount', currentLanguage)}: {questionCount}
             </Label>
@@ -165,6 +206,37 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
             <span>5 {currentLanguage === 'zh-CN' ? '道' : 'questions'}</span>
             <span>50 {currentLanguage === 'zh-CN' ? '道' : 'questions'}</span>
           </div>
+
+          {/* 快速设置：在总题数内分配的小数与分数题数（其余为普通题目） */}
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-gray-700">{currentLanguage === 'zh-CN' ? '小数题数' : 'Decimal count'}</Label>
+              <input
+                type="number"
+                min={0}
+                max={questionCount}
+                value={decimalQuestionCount}
+                onChange={(e) => setDecimalQuestionCount(Math.max(0, Math.min(questionCount, parseInt(e.target.value || '0'))))}
+                className={`w-full px-2 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition ${!isValid ? 'border-red-300' : 'border-gray-300'}`}
+              />
+              <p className="text-xs text-gray-500">{currentLanguage === 'zh-CN' ? '总题数中的小数题' : 'Decimal questions within total'}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-gray-700">{currentLanguage === 'zh-CN' ? '分数题数' : 'Fraction count'}</Label>
+              <input
+                type="number"
+                min={0}
+                max={questionCount}
+                value={fractionQuestionCount}
+                onChange={(e) => setFractionQuestionCount(Math.max(0, Math.min(questionCount, parseInt(e.target.value || '0'))))}
+                className={`w-full px-2 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition ${!isValid ? 'border-red-300' : 'border-gray-300'}`}
+              />
+              <p className="text-xs text-gray-500">{currentLanguage === 'zh-CN' ? '总题数中的分数题' : 'Fraction questions within total'}</p>
+            </div>
+          </div>
+          <div className="mt-1 text-xs font-medium">
+            <span className={`${isValid ? 'text-green-600' : 'text-red-600'}`}>{validationMsg}</span>
+          </div>
         </div>
 
         <Separator />
@@ -173,7 +245,7 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
+              <SemanticIcon name="autoVerify" className="w-4 h-4" />
               <Label className="font-medium text-base">
                 {currentLanguage === 'zh-CN' ? '答案自动验证' : 'Auto Verify Answers'}
               </Label>
@@ -184,8 +256,8 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
             />
           </div>
           <p className="text-xs text-gray-600">
-            {currentLanguage === 'zh-CN' 
-              ? '开启后将自动检查题目答案的正确性，确保题目质量' 
+            {currentLanguage === 'zh-CN'
+              ? '开启后将自动检查题目答案的正确性，确保题目质量'
               : 'Enable automatic verification of answer accuracy to ensure question quality'}
           </p>
         </div>
@@ -259,20 +331,25 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
             
             {/* 开始按钮 */}
             <div className="space-y-3">
-              <Button 
-                onClick={handleStartGeneration} 
-                className="w-full h-12 text-base font-medium bg-blue-600 hover:bg-blue-700"
+              <Button
+                onClick={handleStartGeneration}
+                disabled={startDisabled}
+                className={`w-full h-12 text-base font-medium relative overflow-hidden
+                  ${startDisabled
+                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-transform'}`
+                }
               >
-                <BookOpen className="w-5 h-5 mr-2" />
-                {currentLanguage === 'zh-CN' ? '开始生成题目' : 'Start Generating Questions'}
+                <SemanticIcon name="generate" className="w-5 h-5 mr-2" />
+                {startButtonText}
               </Button>
               
-              <Button 
-                variant="outline" 
-                onClick={onCustomMode} 
+              <Button
+                variant="outline"
+                onClick={onCustomMode}
                 className="w-full h-10 text-sm"
               >
-                <Settings className="w-4 h-4 mr-2" />
+                <SemanticIcon name="settings" className="w-4 h-4 mr-2" />
                 {getTranslation('customMode', currentLanguage)}
               </Button>
             </div>

@@ -12,35 +12,7 @@ interface TerminalProps {
   onError?: (error: string) => void;
 }
 
-// 扩展Window接口以包含electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      // 窗口控制方法
-      minimize: () => void;
-      maximize: () => void;
-      unmaximize: () => void;
-      close: () => void;
-      isMaximized: () => Promise<boolean>;
-      
-      // 终端管理方法
-      createTerminal: (options: any) => Promise<any>;
-      writeTerminal: (id: string, data: string) => Promise<any>;
-      killTerminal: (id: string) => Promise<any>;
-      resizeTerminal?: (id: string, cols: number, rows: number) => Promise<any>;
-      onTerminalData: (callback: (event: any, data: any) => void) => void;
-      onTerminalExit: (callback: (event: any, data: any) => void) => void;
-      removeAllListeners: (channel: string) => void;
-      
-      // 其他方法
-      getAppVersion: () => Promise<string>;
-      showItemInFolder: (fullPath: string) => Promise<void>;
-      onMenuAction: (callback: (event: any, action: string) => void) => void;
-      platform: string;
-      isElectron: boolean;
-    };
-  }
-}
+// 全局 electronAPI 类型集中于 [electron-api.d.ts](math-question-generator/src/types/electron-api.d.ts)，移除重复声明
 
 export function EmbeddedTerminal({ id, name, shell, cwd, onReady, onError }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -106,12 +78,12 @@ export function EmbeddedTerminal({ id, name, shell, cwd, onReady, onError }: Ter
           cols: terminalInstance.current.cols,
           rows: terminalInstance.current.rows,
         });
-
+ 
         if (result.success) {
-          terminalId.current = result.id;
+          terminalId.current = result.id ?? null;
           setIsLoading(false);
           setError(null);
-          if (onReady) onReady(result.id);
+          if (onReady && result.id) onReady(result.id);
         } else {
           throw new Error(result.error || 'Failed to create terminal');
         }
@@ -146,14 +118,14 @@ export function EmbeddedTerminal({ id, name, shell, cwd, onReady, onError }: Ter
     window.addEventListener('resize', handleResize);
 
     // 监听终端数据
-    const handleTerminalData = (_event: any, data: { id: string; data: string }) => {
+    const handleTerminalData = (_event: unknown, data: { id: string; data: string }) => {
       if (data.id === terminalId.current && terminalInstance.current) {
         terminalInstance.current.write(data.data);
       }
     };
 
     // 监听终端退出
-    const handleTerminalExit = (_event: any, data: { id: string; exitCode: number }) => {
+    const handleTerminalExit = (_event: unknown, data: { id: string; exitCode: number }) => {
       if (data.id === terminalId.current) {
         if (terminalInstance.current) {
           terminalInstance.current.write(`\r\n[Process exited with code ${data.exitCode}]\r\n`);

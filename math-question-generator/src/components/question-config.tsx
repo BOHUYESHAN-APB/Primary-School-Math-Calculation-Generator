@@ -12,20 +12,33 @@ import { GeneratorConfig, DEFAULT_CONFIG } from '@/lib/math-generator';
 import { saveConfigToStorage, loadConfigFromStorage } from '@/lib/storage';
 
 interface QuestionConfigProps {
+  // 父组件可以传入当前配置（可选），组件内部会与本地 state 同步
+  config?: GeneratorConfig;
   onConfigChange: (config: GeneratorConfig) => void;
   currentLanguage: string;
   educationSystem: 'domestic' | 'international';
   onEducationSystemChange: (system: 'domestic' | 'international') => void;
 }
 
-const QuestionConfigComponent: React.FC<QuestionConfigProps> = ({ 
-  onConfigChange, 
+const QuestionConfigComponent: React.FC<QuestionConfigProps> = ({
+  config: parentConfig,
+  onConfigChange,
   currentLanguage,
   educationSystem,
   onEducationSystemChange
 }) => {
   const [config, setConfig] = useState<GeneratorConfig>(DEFAULT_CONFIG);
   
+  // 如果父组件传入 config，则同步到本地 state（优先于本地存储）
+  useEffect(() => {
+    if (parentConfig) {
+      setConfig(parentConfig);
+      // 同步回父组件以确保两端一致（父端可能已经是最新，但调用无害）
+      onConfigChange(parentConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentConfig]);
+
   // 知识点选项
   const knowledgePointOptions = [
     { id: 'basic_arithmetic', label: getTranslation('basicArithmetic', currentLanguage) },
@@ -177,8 +190,8 @@ const QuestionConfigComponent: React.FC<QuestionConfigProps> = ({
       ];
       
       // 默认开启小数
-      const newConfig = { 
-        ...config, 
+      const newConfig = {
+        ...config,
         digitRange: newDigitRange,
         includeDecimals: true,
         educationSystem: system
@@ -194,6 +207,137 @@ const QuestionConfigComponent: React.FC<QuestionConfigProps> = ({
       onConfigChange(newConfig);
       saveConfigToStorage(newConfig);
     }
+  };
+
+  // 年级快速预设映射与应用
+  const applyGradePreset = (preset: string) => {
+    let newConfig: GeneratorConfig = { ...config };
+
+    switch (preset) {
+      case 'grade1':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 1,
+          digitRange: [1, 1],
+          operationTypes: ['addition', 'subtraction'],
+          includeFractions: false,
+          includeDecimals: false,
+          fractionQuestionCount: 0,
+          questionCount: 10
+        };
+        break;
+
+      case 'grade2':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 2,
+          digitRange: [1, 2],
+          operationTypes: ['addition', 'subtraction', 'multiplication'],
+          includeFractions: false,
+          includeDecimals: false,
+          fractionQuestionCount: 0,
+          questionCount: 12
+        };
+        break;
+
+      case 'grade3':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 3,
+          digitRange: [1, 2],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division'],
+          includeFractions: false,
+          includeDecimals: false,
+          fractionQuestionCount: 0,
+          questionCount: 12
+        };
+        break;
+
+      case 'grade4':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 4,
+          digitRange: [1, 3],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division'],
+          includeFractions: true,
+          includeDecimals: false,
+          fractionQuestionCount: 3,
+          questionCount: 15
+        };
+        break;
+
+      case 'grade5':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 5,
+          digitRange: [1, 3],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division', 'percentage'],
+          includeFractions: true,
+          includeDecimals: true,
+          decimalPlaces: 2,
+          fractionQuestionCount: 5,
+          questionCount: 20
+        };
+        break;
+
+      case 'grade6':
+        newConfig = {
+          ...newConfig,
+          gradeLevel: 6,
+          digitRange: [2, 4],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division', 'mixed_operations', 'percentage'],
+          includeFractions: true,
+          includeDecimals: true,
+          decimalPlaces: 2,
+          fractionQuestionCount: 6,
+          questionCount: 25
+        };
+        break;
+
+      case 'easy':
+        newConfig = {
+          ...newConfig,
+          digitRange: [1, 2],
+          operationTypes: ['addition', 'subtraction'],
+          includeFractions: false,
+          includeDecimals: false,
+          fractionQuestionCount: 0,
+          questionCount: Math.min(15, newConfig.questionCount || 10)
+        };
+        break;
+
+      case 'normal':
+        newConfig = {
+          ...newConfig,
+          digitRange: [1, 3],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division'],
+          includeFractions: true,
+          includeDecimals: false,
+          fractionQuestionCount: Math.min(5, newConfig.fractionQuestionCount || 5),
+          questionCount: Math.max(15, newConfig.questionCount || 15)
+        };
+        break;
+
+      case 'hard':
+        newConfig = {
+          ...newConfig,
+          digitRange: [2, 4],
+          operationTypes: ['addition', 'subtraction', 'multiplication', 'division', 'mixed_operations', 'percentage'],
+          includeFractions: true,
+          includeDecimals: true,
+          decimalPlaces: 2,
+          fractionQuestionCount: Math.max(5, newConfig.fractionQuestionCount || 5),
+          questionCount: Math.max(20, newConfig.questionCount || 20)
+        };
+        break;
+
+      default:
+        break;
+    }
+
+    setConfig(newConfig);
+    onConfigChange(newConfig);
+    saveConfigToStorage(newConfig);
   };
   
   return (
@@ -258,10 +402,58 @@ const QuestionConfigComponent: React.FC<QuestionConfigProps> = ({
         <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-800">
             <strong>{currentLanguage === 'zh-CN' ? '提示' : 'Note'}:</strong>{' '}
-            {currentLanguage === 'zh-CN' 
+            {currentLanguage === 'zh-CN'
               ? '年级选择已移至"快速开始"模式，此处为专业自定义配置。'
               : 'Grade selection has been moved to "Quick Start" mode. This is for professional custom configuration.'}
           </p>
+        </div>
+
+        {/* 年级快速预设 */}
+        <div className="space-y-2 pt-2">
+          <Label>{currentLanguage === 'zh-CN' ? '年级快速预设' : 'Grade Quick Presets'}</Label>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 1 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade1')}>
+              {getTranslation('grade1', currentLanguage) || (currentLanguage === 'zh-CN' ? '一年级' : 'Grade 1')}
+            </Badge>
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 2 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade2')}>
+              {getTranslation('grade2', currentLanguage) || (currentLanguage === 'zh-CN' ? '二年级' : 'Grade 2')}
+            </Badge>
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 3 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade3')}>
+              {getTranslation('grade3', currentLanguage) || (currentLanguage === 'zh-CN' ? '三年级' : 'Grade 3')}
+            </Badge>
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 4 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade4')}>
+              {getTranslation('grade4', currentLanguage) || (currentLanguage === 'zh-CN' ? '四年级' : 'Grade 4')}
+            </Badge>
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 5 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade5')}>
+              {getTranslation('grade5', currentLanguage) || (currentLanguage === 'zh-CN' ? '五年级' : 'Grade 5')}
+            </Badge>
+            <Badge className="cursor-pointer" variant={config.gradeLevel === 6 ? 'default' : 'outline'} onClick={() => applyGradePreset('grade6')}>
+              {getTranslation('grade6', currentLanguage) || (currentLanguage === 'zh-CN' ? '六年级' : 'Grade 6')}
+            </Badge>
+
+            {/* 难度快速预设 */}
+            <Badge
+              className="cursor-pointer ml-4 active:scale-95 transition-transform duration-150"
+              variant="outline"
+              onClick={() => applyGradePreset('easy')}
+            >
+              {currentLanguage === 'zh-CN' ? '简单 (Easy)' : 'Easy'}
+            </Badge>
+            <Badge
+              className="cursor-pointer active:scale-95 transition-transform duration-150"
+              variant="outline"
+              onClick={() => applyGradePreset('normal')}
+            >
+              {currentLanguage === 'zh-CN' ? '标准 (Normal)' : 'Normal'}
+            </Badge>
+            <Badge
+              className="cursor-pointer active:scale-95 transition-transform duration-150"
+              variant="outline"
+              onClick={() => applyGradePreset('hard')}
+            >
+              {currentLanguage === 'zh-CN' ? '困难 (Hard)' : 'Hard'}
+            </Badge>
+          </div>
         </div>
         
         <Separator />
