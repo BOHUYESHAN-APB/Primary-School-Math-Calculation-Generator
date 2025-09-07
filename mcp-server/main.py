@@ -659,4 +659,58 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    import asyncio
+    import signal
+    import sys
+
+    config = uvicorn.Config(
+        app=app,
+        host="0.0.0.0",
+        port=8002,
+        log_level="info",
+        access_log=True,
+        timeout_keep_alive=30
+    )
+
+    server = uvicorn.Server(config)
+
+    def _run_server():
+        # 在独立事件循环中运行 server.serve()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(server.serve())
+        finally:
+            try:
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            except Exception:
+                pass
+            loop.close()
+
+    def _signal_handler(sig, frame):
+        try:
+            print(f"收到信号 {sig}, 正在优雅关闭服务器...")
+            # server.should_exit 由 uvicorn 监听以触发关闭
+            server.should_exit = True
+        except Exception as e:
+            print("Signal handler error:", e)
+
+    # 注册信号处理器（在Windows上 SIGTERM 有差异）
+    try:
+        signal.signal(signal.SIGINT, _signal_handler)
+        signal.signal(signal.SIGTERM, _signal_handler)
+    except Exception:
+        # 某些环境不支持 signal 注册，忽略
+        pass
+
+    try:
+        print("MCP服务器启动中...")
+        print(f"服务器地址: http://{config.host}:{config.port}")
+        _run_server()
+    except KeyboardInterrupt:
+        print("用户中断，正在关闭服务器...")
+    except Exception as e:
+        print("服务器运行错误:", e)
+        sys.exit(1)
+    finally:
+        print("MCP服务器已关闭")

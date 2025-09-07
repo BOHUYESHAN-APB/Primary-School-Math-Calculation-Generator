@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import '@xterm/xterm/css/xterm.css';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
@@ -20,22 +23,11 @@ export function MCPServerManager({ language }: { language: string }) {
   });
 
   const [showTerminal, setShowTerminal] = useState(false);
-  const [serverOutput, setServerOutput] = useState<string[]>([]);
 
-  // 监听主进程输出与退出
+  // 监听主进程退出与 PID（输出由内置终端订阅并显示）
   useEffect(() => {
     const api = window.electronAPI;
     if (!api) return;
-
-    const outputHandler = (_e: unknown, payload: { data: string }) => {
-      if (payload && typeof payload.data === 'string') {
-        const line = payload.data;
-        setServerOutput(prev => {
-          const next = [...prev, line];
-          return next.length > 500 ? next.slice(-500) : next;
-        });
-      }
-    };
 
     const exitHandler = () => {
       setServerStatus(s => ({
@@ -45,12 +37,18 @@ export function MCPServerManager({ language }: { language: string }) {
       }));
     };
 
-    api.onMCPServerOutput?.(outputHandler);
+    const pidHandler = (_e: unknown, payload: { pid: number }) => {
+      if (payload && typeof payload.pid === 'number') {
+        setServerStatus(s => ({ ...s, pid: payload.pid }));
+      }
+    };
+
     api.onMCPServerExit?.(exitHandler);
+    api.onMCPServerPid?.(pidHandler);
 
     return () => {
-      api?.removeAllListeners?.('mcp-server:output');
       api?.removeAllListeners?.('mcp-server:exit');
+      api?.removeAllListeners?.('mcp-server:pid');
     };
   }, []);
 
@@ -112,6 +110,70 @@ export function MCPServerManager({ language }: { language: string }) {
   };
 
   const t = texts[language as keyof typeof texts] || texts['zh-CN'];
+  
+  // 内置用于显示 MCP 输出的轻量终端（只订阅 mcp-server:output 事件并写入 XTerm）
+  function MCPTerminal() {
+    const terminalRef = useRef<HTMLDivElement | null>(null);
+    const xtermRef = useRef<XTerm | null>(null);
+    const fitRef = useRef<FitAddon | null>(null);
+
+    useEffect(() => {
+      if (!terminalRef.current) return;
+
+      // 初始化xterm
+      xtermRef.current = new XTerm({
+        cursorBlink: true,
+        fontSize: 13,
+        theme: { background: '#000000', foreground: '#ffffff' },
+        convertEol: true,
+      });
+      fitRef.current = new FitAddon();
+      xtermRef.current.loadAddon(fitRef.current);
+      xtermRef.current.open(terminalRef.current);
+      fitRef.current.fit();
+
+      const handleOutput = (_e: unknown, payload: { data: string }) => {
+        try {
+          xtermRef.current?.write(payload.data);
+        } catch (err) {
+          console.error('Failed to write MCP output to terminal:', err);
+        }
+      };
+      const handleExit = (_e: unknown, payload: { exitCode: number }) => {
+        xtermRef.current?.writeln(`\r\n[Process exited with code ${payload.exitCode}]\r\n`);
+      };
+
+      if (window.electronAPI) {
+        window.electronAPI.onMCPServerOutput?.(handleOutput);
+        window.electronAPI.onMCPServerExit?.(handleExit);
+      }
+
+      const handleResize = () => {
+        try {
+          fitRef.current?.fit();
+        } catch {
+            // ignore
+          }
+      };
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        if (window.electronAPI) {
+          window.electronAPI.removeAllListeners?.('mcp-server:output');
+          window.electronAPI.removeAllListeners?.('mcp-server:exit');
+        }
+        try {
+          xtermRef.current?.dispose();
+          xtermRef.current = null;
+        } catch {
+          // ignore
+        }
+      };
+    }, []);
+
+    return <div ref={terminalRef} className="h-64 bg-black text-white font-mono text-xs p-2 overflow-auto" />;
+  }
 
   // 启动MCP服务器（真实调用 IPC）
   const startServer = async () => {
@@ -134,7 +196,7 @@ export function MCPServerManager({ language }: { language: string }) {
     try {
       const res = await api.startMCPServer();
       if (res?.success) {
-        setServerStatus({ status: 'running', lastUpdate: new Date() });
+        setServerStatus({ status: 'running', lastUpdate: new Date(), pid: res.pid });
         setShowTerminal(true);
       } else {
         setServerStatus({
@@ -311,15 +373,8 @@ export function MCPServerManager({ language }: { language: string }) {
                 {t.closeTerminal}
               </Button>
             </div>
-            <div className="h-64 bg-black text-white font-mono text-xs p-2 overflow-auto whitespace-pre-wrap">
-              {serverOutput.length === 0 ? (
-                <div className="text-gray-400">
-                  {language === 'zh-CN' ? '暂无输出' : 'No output yet'}
-                </div>
-              ) : (
-                serverOutput.map((line, i) => <div key={i}>{line}</div>)
-              )}
-            </div>
+            {/* 内置 XTerm 终端显示 MCP 输出 */}
+            <MCPTerminal />
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -46,6 +46,23 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
     questionCount: parseInt(localStorage.getItem('defaultQuestionCount') || '10'),
     exportFormat: localStorage.getItem('defaultExportFormat') || 'pdf'
   });
+
+  // MCP 服务器状态与日志（通过 preload 暴露的 electronAPI）
+  const [mcpStatus, setMcpStatus] = useState<{ running: boolean; pid?: number; startTime?: number; logFile?: string; status?: string; error?: string } | null>(null);
+  const [mcpLogs, setMcpLogs] = useState<string>('');
+  const [mcpActionLoading, setMcpActionLoading] = useState<boolean>(false);
+
+  // 隐藏的管理员终端解锁机制：多次点击版本号可显示内置终端（用于安全检查）
+  const secretClicksRef = useRef(0);
+  const [adminTerminalVisible, setAdminTerminalVisible] = useState(false);
+
+  const handleVersionClick = () => {
+    secretClicksRef.current += 1;
+    if (secretClicksRef.current >= 5) {
+      setAdminTerminalVisible(true);
+      secretClicksRef.current = 0;
+    }
+  };
 
   const texts = {
     'zh-CN': {
@@ -188,6 +205,38 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  // MCP 状态刷新与周期检查
+  const refreshMCPStatus = useCallback(async () => {
+    try {
+      const api = (window as any).electronAPI;
+      if (!api || typeof api.getMCPServerStatus !== 'function') return;
+      const status = await api.getMCPServerStatus();
+      setMcpStatus(status || null);
+    } catch (e) {
+      console.error('Failed to refresh MCP status', e);
+      const errMsg = e && typeof e === 'object' && 'message' in e ? (e as any).message : String(e);
+      setMcpStatus({ running: false, status: 'error', error: errMsg });
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!((window as any).electronAPI && typeof (window as any).electronAPI.getMCPServerStatus === 'function')) {
+      // electronAPI 不存在时跳过
+      return;
+    }
+    const run = async () => {
+      if (!mounted) return;
+      await refreshMCPStatus();
+    };
+    run();
+    const interval = setInterval(run, 30000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [refreshMCPStatus]);
 
   const saveSettings = async () => {
     try {
@@ -451,9 +500,22 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
                 <div className="space-y-4">
                   <div>
                     <Label>应用版本</Label>
-                    <div className="mt-1 p-3 bg-muted rounded-lg font-mono">
+                    <div
+                      role="button"
+                      onClick={handleVersionClick}
+                      className="mt-1 p-3 bg-muted rounded-lg font-mono cursor-pointer select-none"
+                      title={language === 'zh-CN' ? '连续点击五次以显示管理员终端' : 'Click five times to reveal admin terminal'}
+                    >
                       {config.app.version}
                     </div>
+                    {adminTerminalVisible && (
+                      <div className="mt-3">
+                        <Label className="text-sm">{language === 'zh-CN' ? '管理员终端（已解锁）' : 'Admin Terminal (unlocked)'}</Label>
+                        <div className="mt-2 border rounded-md">
+                          <TerminalManager language={language} />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -475,6 +537,112 @@ export function SettingsPage({ language, onLanguageChange, theme, onThemeChange 
                     <div className="mt-1 p-3 bg-muted rounded-lg">
                       {Object.keys(config.difficulty_levels || {}).length} 级
                     </div>
+                  </div>
+
+                  {/* MCP 状态面板 */}
+                  <div className="mt-4">
+                    <Label>{language === 'zh-CN' ? '本地后端（MCP）状态' : 'Local Backend (MCP) Status'}</Label>
+                    <div className="mt-2 p-3 bg-muted rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                      <div>
+                        <div className="text-sm text-muted-foreground">{language === 'zh-CN' ? '运行状态' : 'Status'}</div>
+                        <div className="font-mono mt-1">
+                          {mcpStatus ? (mcpStatus.running ? (language==='zh-CN' ? '运行中' : 'Running') : (mcpStatus.status || (language==='zh-CN' ? '停止' : 'Stopped'))) : (language==='zh-CN' ? '未知' : 'Unknown')}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-sm text-muted-foreground">{language === 'zh-CN' ? 'PID' : 'PID'}</div>
+                        <div className="font-mono mt-1">{mcpStatus && mcpStatus.pid ? mcpStatus.pid : '-'}</div>
+                      </div>
+
+                      <div className="flex gap-2 md:justify-end">
+                        <Button
+                          onClick={async () => {
+                            try {
+                              setMcpActionLoading(true);
+                              const api = (window as any).electronAPI;
+                              if (!api) return;
+                              const res = await api.startMCPServer();
+                              // 刷新状态
+                              await refreshMCPStatus();
+                              if (res && !res.success) {
+                                setMessage({ type: 'error', text: (language==='zh-CN' ? '启动MCP失败：' : 'Failed to start MCP: ') + (res.error || res.message || '') });
+                              } else {
+                                setMessage({ type: 'success', text: language==='zh-CN' ? 'MCP 已启动' : 'MCP started' });
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              setMessage({ type: 'error', text: language === 'zh-CN' ? '启动MCP失败' : 'Failed to start MCP' });
+                            } finally {
+                              setMcpActionLoading(false);
+                              setTimeout(()=>setMessage(null),3000);
+                            }
+                          }}
+                          disabled={mcpActionLoading}
+                        >
+                          {language === 'zh-CN' ? '启动' : 'Start'}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              setMcpActionLoading(true);
+                              const api = (window as any).electronAPI;
+                              if (!api) return;
+                              const res = await api.stopMCPServer();
+                              await refreshMCPStatus();
+                              if (res && !res.success) {
+                                setMessage({ type: 'error', text: (language==='zh-CN' ? '停止MCP失败：' : 'Failed to stop MCP: ') + (res.error || res.message || '') });
+                              } else {
+                                setMessage({ type: 'success', text: language==='zh-CN' ? 'MCP 已停止' : 'MCP stopped' });
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              setMessage({ type: 'error', text: language === 'zh-CN' ? '停止MCP失败' : 'Failed to stop MCP' });
+                            } finally {
+                              setMcpActionLoading(false);
+                              setTimeout(()=>setMessage(null),3000);
+                            }
+                          }}
+                          disabled={mcpActionLoading}
+                        >
+                          {language === 'zh-CN' ? '停止' : 'Stop'}
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          onClick={async () => {
+                            try {
+                              const api = (window as any).electronAPI;
+                              if (!api) return;
+                              const logsRes = await api.getMCPServerLogs();
+                              if (logsRes && logsRes.logs !== undefined) {
+                                setMcpLogs(logsRes.logs);
+                                // 展开一个简单的 modal 替代方案：在 message 中提示并在控制台输出
+                                console.log('MCP logs:', logsRes.logs);
+                                setMessage({ type: 'info', text: language==='zh-CN' ? '已获取 MCP 日志（查看控制台）' : 'Fetched MCP logs (check console)' });
+                                setTimeout(()=>setMessage(null),3000);
+                              } else {
+                                setMessage({ type: 'error', text: language==='zh-CN' ? '无法获取日志' : 'Unable to fetch logs' });
+                                setTimeout(()=>setMessage(null),3000);
+                              }
+                            } catch (e) {
+                              console.error(e);
+                              setMessage({ type: 'error', text: language==='zh-CN' ? '无法获取日志' : 'Unable to fetch logs' });
+                            }
+                          }}
+                        >
+                          {language === 'zh-CN' ? '获取日志' : 'Get Logs'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {mcpLogs && (
+                      <div className="mt-3 p-3 bg-black text-white rounded font-mono text-sm overflow-auto max-h-48">
+                        <pre>{mcpLogs}</pre>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

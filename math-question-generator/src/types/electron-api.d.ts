@@ -19,15 +19,20 @@ export interface ElectronAPI {
   removeAllListeners: (channel: string) => void;
 
   // MCP 服务器管理
-  startMCPServer: () => Promise<{ success: boolean; message?: string; error?: string }>;
+  startMCPServer: () => Promise<{ success: boolean; pid?: number; message?: string; error?: string }>;
   stopMCPServer: () => Promise<{ success: boolean; message?: string; error?: string }>;
   onMCPServerOutput: (callback: (event: unknown, data: { data: string }) => void) => void;
   onMCPServerExit: (callback: (event: unknown, data: { exitCode: number }) => void) => void;
+  onMCPServerPid?: (callback: (event: unknown, data: { pid: number }) => void) => void;
+  // 状态与日志
+  getMCPServerStatus: () => Promise<{ running: boolean; pid?: number; startTime?: number; logFile?: string; status: string; error?: string }>;
+  getMCPServerLogs: () => Promise<{ logs: string; error?: string }>;
 
   // 其他
   getAppVersion: () => Promise<string>;
   showItemInFolder: (fullPath: string) => Promise<void>;
-  onMenuAction: (callback: (event: unknown, action: string) => void) => void;
+  // 注册菜单回调，返回 unsubscribe 函数供前端在卸载时调用
+  onMenuAction: (callback: (action: string, ...args: unknown[]) => void) => () => void;
   platform: string;
   isElectron: boolean;
 }
