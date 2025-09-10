@@ -14,27 +14,22 @@ import { exportToPDF } from '@/lib/pdf-exporter';
 import { SemanticIcon } from '@/components/semantic-icon';
 import { getTranslation } from '@/lib/i18n';
 
-interface Question {
-  expression: string;
-  answer: number | string;
-  steps?: string[];
-  difficulty?: number;
-  knowledgePoint?: string;
-}
+import { MathQuestion } from '@/lib/math-generator';
 
 interface PDFExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  questions: Question[];
+  questions: MathQuestion[];
   originalCount?: number;
   selectedCount?: number;
   language: string;
 }
 
-function replaceParams(str: string, params: Record<string, string | number>) {
+function replaceParams(str: string | null | undefined, params: Record<string, string | number>) {
+  const base = str ?? '';
   return Object.keys(params).reduce(
-    (acc, k) => acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
-    str
+    (acc, k) => String(acc).replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
+    base
   );
 }
 

@@ -44,7 +44,7 @@ const ChartContainer = React.forwardRef<
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const chartId = `chart-${id || String(uniqueId).replace(/:/g, "")}`
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -207,16 +207,17 @@ const ChartTooltipContent = React.forwardRef<
                     ) : (
                       !hideIndicator && (
                         <div
-                          className={cn(
+                          className={[
                             "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
-                            {
-                              "h-2.5 w-2.5": indicator === "dot",
-                              "w-1": indicator === "line",
-                              "w-0 border-[1.5px] border-dashed bg-transparent":
-                                indicator === "dashed",
-                              "my-0.5": nestLabel && indicator === "dashed",
-                            }
-                          )}
+                            indicator === "dot"
+                              ? "h-2.5 w-2.5"
+                              : indicator === "line"
+                              ? "w-1"
+                              : indicator === "dashed"
+                              ? "w-0 border-[1.5px] border-dashed bg-transparent"
+                              : "",
+                            nestLabel && indicator === "dashed" ? "my-0.5" : ""
+                          ].filter(Boolean).join(" ")}
                           style={
                             {
                               "--color-bg": indicatorColor,

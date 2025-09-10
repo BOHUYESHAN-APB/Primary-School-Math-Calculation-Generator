@@ -35,9 +35,10 @@ const QuestionPreview = ({ questions, showAnswers = false, currentLanguage, onSe
     );
   }
 
-  // 将下划线格式转换为驼峰命名格式
-  const toCamelCase = (str: string) => {
-    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  // 将下划线格式转换为驼峰命名格式（安全处理可能为 undefined 的输入）
+  const toCamelCase = (str?: string | null) => {
+    if (!str) return '';
+    return String(str).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   };
 
   // 根据难度等级获取颜色类
@@ -109,7 +110,7 @@ const QuestionPreview = ({ questions, showAnswers = false, currentLanguage, onSe
                     {getTranslation('steps', currentLanguage)}:
                   </div>
                   <ol className="list-decimal list-inside space-y-1 bg-white p-3 rounded border border-green-200">
-                    {question.steps.map((step: string, stepIndex: number) => (
+                    {(question.steps || []).map((step: string, stepIndex: number) => (
                       <li key={stepIndex} className="text-gray-600 text-sm">
                         {step}
                       </li>

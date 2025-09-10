@@ -24,10 +24,11 @@ interface WordExportDialogProps {
   language: string;
 }
 
-function replaceParams(str: string, params: Record<string, string | number>) {
+function replaceParams(str: string | null | undefined, params: Record<string, string | number>) {
+  const base = str ?? '';
   return Object.keys(params).reduce(
-    (acc, key) => acc.replace(new RegExp(`\\{${key}\\}`, 'g'), String(params[key])),
-    str
+    (acc, key) => String(acc).replace(new RegExp(`\\{${key}\\}`, 'g'), String(params[key])),
+    base
   );
 }
 

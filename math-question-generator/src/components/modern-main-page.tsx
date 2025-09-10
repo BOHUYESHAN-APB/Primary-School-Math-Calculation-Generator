@@ -11,8 +11,8 @@ import { HTMLExportDialog } from './html-export-dialog';
 import { PDFExportDialog } from './pdf-export-dialog';
 import { WordExportDialog } from './word-export-dialog';
 import { SemanticIcon } from './semantic-icon';
-import { validateGeneratorConfig } from '@/lib/validation';
-import { notifyWarning, notifyError } from '@/lib/notify';
+import { validateGeneratorConfig } from '../lib/validation';
+import { notifyWarning, notifyError } from '../lib/notify';
 
 interface ModernMainPageProps {
   language: string;

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import QuestionConfigComponent from './question-config';
 import QuestionPreview from './question-preview';
-import { MathQuestionGenerator, GeneratorConfig, DEFAULT_CONFIG, MathQuestion } from '@/lib/math-generator';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MathQuestionGenerator, GeneratorConfig, DEFAULT_CONFIG, MathQuestion } from '../lib/math-generator';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { HTMLExportDialog } from './html-export-dialog';
 import { PDFExportDialog } from './pdf-export-dialog';
 import { WordExportDialog } from './word-export-dialog';
-import { getTranslation } from '@/lib/i18n';
-import { SemanticIcon } from '@/components/semantic-icon';
-import { validateGeneratorConfig } from '@/lib/validation';
-import { notifySuccess, notifyWarning, notifyError } from '@/lib/notify';
+import { getTranslation } from '../lib/i18n';
+import { SemanticIcon } from './semantic-icon';
+import { validateGeneratorConfig } from '../lib/validation';
+import { notifySuccess, notifyWarning, notifyError } from '../lib/notify';
 
 interface AdvancedSettingsProps {
   language: string;

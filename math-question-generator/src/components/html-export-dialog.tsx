@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Switch } from '@/components/ui/switch';
-import { SemanticIcon } from '@/components/semantic-icon';
-import { getTranslation } from '@/lib/i18n';
-import { MathQuestion } from '@/lib/math-generator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Switch } from './ui/switch';
+import { SemanticIcon } from './semantic-icon';
+import { getTranslation } from '../lib/i18n';
+import { MathQuestion } from '../lib/math-generator';
+import { exportToHTML } from '../lib/html-exporter';
 
 interface ExportOptions {
   layout: 'side-by-side' | 'question-first' | 'answer-first';
@@ -26,10 +27,11 @@ interface HTMLExportDialogProps {
   language: string;
 }
 
-function replaceParams(str: string, params: Record<string, string | number>) {
+function replaceParams(str?: string | null, params: Record<string, string | number>) {
+  const base = str ?? '';
   return Object.keys(params).reduce(
-    (acc, k) => acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
-    str
+    (acc, k) => String(acc).replace(new RegExp(`\\{${k}\\}`, 'g'), String(params[k])),
+    base
   );
 }
 
@@ -55,71 +57,16 @@ export function HTMLExportDialog({ open, onOpenChange, questions, originalCount,
   };
   const rangeDescription = buildRangeDescription();
 
-  const handleExport = () => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>${options.title}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 40px; }
-          .container { max-width: 800px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .questions { margin-bottom: 40px; }
-          .question { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-          .answer { background-color: #f9f9f9; padding: 15px; border-radius: 8px; }
-          .steps { margin-top: 10px; font-size: 14px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>${options.title}</h1>
-            <h2>${options.subject}</h2>
-          </div>
-          
-          <div class="questions">
-            ${questions
-              .map(
-                (question, index) => `
-              <div class="question">
-                ${options.showQuestionNumbers ? `<strong>${index + 1}.</strong> ` : ''}
-                ${question.expression}
-              </div>
-              <div class="answer">
-                <strong>${t('answer')}:</strong> ${question.answer}
-                ${
-                  options.includeSteps && question.steps
-                    ? `
-                  <div class="steps">
-                    <strong>${t('steps')}:</strong>
-                    <ol>
-                      ${question.steps.map((step: string) => `<li>${step}</li>`).join('')}
-                    </ol>
-                  </div>
-                `
-                    : ''
-                }
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${options.title}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    // Use shared exporter implementation
+    await exportToHTML(questions, {
+      layout: options.layout,
+      includeSteps: options.includeSteps,
+      showQuestionNumbers: options.showQuestionNumbers,
+      title: options.title,
+      subject: options.subject,
+      language
+    });
     onOpenChange(false);
   };
 
