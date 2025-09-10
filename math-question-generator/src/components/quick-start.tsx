@@ -8,16 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { SemanticIcon } from '@/components/semantic-icon';
-import { getTranslation } from '@/lib/i18n';
-import { GeneratorConfig } from '@/lib/math-generator';
-import { getGradePreset, getDifficultyModes, getSupportedGrades, DifficultyMode } from '@/lib/grade-presets';
+import { getTranslation } from '../lib/i18n';
+import { GeneratorConfig, MathQuestion, MathQuestionGenerator } from '../lib/math-generator';
+import { getGradePreset, getDifficultyModes, getSupportedGrades, DifficultyMode } from '../lib/grade-presets';
 interface QuickStartProps {
   onConfigSelect: (config: GeneratorConfig) => void;
   onCustomMode: () => void;
   currentLanguage: string;
 }
 
-const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, currentLanguage }) => {
+const QuickStart: React.FC<QuickStartProps> = (props: QuickStartProps) => {
+  const { onConfigSelect, onCustomMode, currentLanguage } = props;
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyMode | null>(null);
   const [educationSystem, setEducationSystem] = useState<'domestic' | 'international'>('domestic');
@@ -25,6 +26,10 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
   const [decimalQuestionCount, setDecimalQuestionCount] = useState<number>(0);
   const [fractionQuestionCount, setFractionQuestionCount] = useState<number>(0);
   const [autoVerifyAnswers, setAutoVerifyAnswers] = useState<boolean>(true); // 默认开启答案自检
+
+  // 本地生成器状态与预览
+  const [generating, setGenerating] = useState<boolean>(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<MathQuestion[]>([]);
 
   // 校验与提示
   const [validationMsg, setValidationMsg] = useState<string>('');
@@ -104,7 +109,7 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
     setSelectedDifficulty(difficulty);
   };
 
-  const handleStartGeneration = () => {
+  const handleStartGeneration = async () => {
     if (!isValid) return;
     if (selectedGrade && selectedDifficulty) {
       const baseConfig = getGradePreset(selectedGrade, selectedDifficulty);
@@ -112,14 +117,30 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
         const customizedConfig: GeneratorConfig = {
           ...baseConfig,
           educationSystem,
-            questionCount,
+          questionCount,
           autoVerifyAnswers,
           includeDecimals: decimalQuestionCount > 0 || baseConfig.includeDecimals,
           decimalPlaces: baseConfig.decimalPlaces ?? 2,
           includeFractions: fractionQuestionCount > 0 || baseConfig.includeFractions,
           fractionQuestionCount
         };
+
+        // 向父组件传递配置（保持原有行为）
         onConfigSelect(customizedConfig);
+
+        // 本地生成并展示预览
+        try {
+          setGenerating(true);
+          const gen = new MathQuestionGenerator(customizedConfig);
+          const qs = gen.generateQuestions();
+          // 只展示前几题作为预览
+          setGeneratedQuestions(qs.slice(0, 6));
+        } catch (err) {
+          console.error('生成题目失败', err);
+          setGeneratedQuestions([]);
+        } finally {
+          setGenerating(false);
+        }
       }
     }
   };
@@ -333,15 +354,15 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
             <div className="space-y-3">
               <Button
                 onClick={handleStartGeneration}
-                disabled={startDisabled}
+                disabled={startDisabled || generating}
                 className={`w-full h-12 text-base font-medium relative overflow-hidden
-                  ${startDisabled
+                  ${startDisabled || generating
                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-transform'}`
                 }
               >
                 <SemanticIcon name="generate" className="w-5 h-5 mr-2" />
-                {startButtonText}
+                {generating ? (currentLanguage === 'zh-CN' ? '生成中...' : 'Generating...') : startButtonText}
               </Button>
               
               <Button
@@ -352,6 +373,28 @@ const QuickStart: React.FC<QuickStartProps> = ({ onConfigSelect, onCustomMode, c
                 <SemanticIcon name="settings" className="w-4 h-4 mr-2" />
                 {getTranslation('customMode', currentLanguage)}
               </Button>
+
+              {/* 生成预览 */}
+              {generatedQuestions.length > 0 && (
+                <div className="mt-4 border rounded-md p-3 bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">
+                      {currentLanguage === 'zh-CN' ? '生成预览（前几题）' : 'Generated Preview (first few)'}
+                    </div>
+                    <div className="text-xs text-gray-500">{generatedQuestions.length} {currentLanguage === 'zh-CN' ? '题' : 'questions'}</div>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    {generatedQuestions.map((q, idx) => (
+                      <li key={q.id} className="flex items-start justify-between">
+                        <div className="pr-4">{q.expression}</div>
+                        <div className="text-muted-foreground text-xs">{
+                          currentLanguage === 'zh-CN' ? `答案: ${q.answer}` : `Ans: ${q.answer}`
+                        }</div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
           </>
         )}

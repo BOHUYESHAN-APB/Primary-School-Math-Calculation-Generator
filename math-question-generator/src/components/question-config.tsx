@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { getTranslation } from '@/lib/i18n';
-import { GeneratorConfig, DEFAULT_CONFIG } from '@/lib/math-generator';
-import { saveConfigToStorage, loadConfigFromStorage } from '@/lib/storage';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Slider } from './ui/slider';
+import { Input } from './ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Badge } from './ui/badge';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { Separator } from './ui/separator';
+import { getTranslation } from '../lib/i18n';
+import { GeneratorConfig, DEFAULT_CONFIG } from '../lib/math-generator';
+import { saveConfigToStorage, loadConfigFromStorage } from '../lib/storage';
 
 interface QuestionConfigProps {
   // 父组件可以传入当前配置（可选），组件内部会与本地 state 同步

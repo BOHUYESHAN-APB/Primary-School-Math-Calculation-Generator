@@ -5,14 +5,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { Loader2 } from 'lucide-react';
-import { exportToPDF } from '@/lib/pdf-exporter';
-import { SemanticIcon } from '@/components/semantic-icon';
-import { getTranslation } from '@/lib/i18n';
+import { exportToPDF } from '../lib/pdf-exporter';
+import { SemanticIcon } from './semantic-icon';
+import { getTranslation } from '../lib/i18n';
 
 import { MathQuestion } from '@/lib/math-generator';
 

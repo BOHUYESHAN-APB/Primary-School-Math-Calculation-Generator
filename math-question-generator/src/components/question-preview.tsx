@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getTranslation } from '@/lib/i18n';
-import { MathQuestion } from '@/lib/math-generator';
+import { getTranslation } from '../lib/i18n';
+import { MathQuestion } from '../lib/math-generator';
 import { AIAnalysisComponent } from './ai-analysis';
 import { Button } from './ui/button';
 import { Bot } from 'lucide-react';
