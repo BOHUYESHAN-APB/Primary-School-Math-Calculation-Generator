@@ -1,0 +1,252 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  color: #111827;
+  background: #f2f2f7; /* iOS grouped background */
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: rgba(17, 24, 39, 0.12);
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+  --blue: #0a84ff;
+  --blue-pressed: #0060df;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.brand .title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.btn {
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover {
+  background: rgba(10, 132, 255, 0.06);
+  border-color: rgba(10, 132, 255, 0.35);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn.primary {
+  background: var(--blue);
+  color: white;
+  border-color: rgba(10, 132, 255, 0.6);
+}
+.btn.primary:hover {
+  background: #0876e6;
+}
+.btn.primary:active {
+  background: var(--blue-pressed);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card {
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 22px;
+  padding: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1.25fr;
+  gap: 16px;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+select,
+input {
+  padding: 10px 12px;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+  border-radius: 14px;
+  outline: none;
+  background: #fff;
+}
+select:focus,
+input:focus {
+  border-color: rgba(10, 132, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.08);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+.segment {
+  border: none;
+  background: transparent;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: rgba(17, 24, 39, 0.8);
+  font-weight: 650;
+}
+.segment.active {
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  color: var(--text);
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill {
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+.pill:hover {
+  border-color: rgba(10, 132, 255, 0.35);
+  background: rgba(10, 132, 255, 0.06);
+}
+.pill:active {
+  transform: scale(0.98);
+}
+.pill.selected {
+  background: rgba(10, 132, 255, 0.12);
+  border-color: rgba(10, 132, 255, 0.55);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(17, 24, 39, 0.08);
+  margin: 14px 0;
+}
+
+.questions {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.q {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.q .stem {
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  padding: 26px 10px 18px;
+  color: var(--muted);
+  text-align: center;
+}
+.empty img {
+  width: 220px;
+  max-width: 70%;
+  border-radius: 18px;
+  opacity: 0.92;
+  margin-bottom: 12px;
+}
+

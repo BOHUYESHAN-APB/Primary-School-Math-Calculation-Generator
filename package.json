@@ -1,115 +1,17 @@
 {
-  "name": "mathbud-digital-math",
-  "version": "1.0.0-alpha",
+  "name": "mathbud-monorepo",
   "private": true,
-  "description": "数字芽算（MathBud） - 智能数学题目生成器",
-  "author": "AstraSynergy",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "build": "cd math-question-generator && npm run build",
-    "start": "electron .",
-    "dev": "cd math-question-generator && npm run dev",
-    "windows:prepare": "npm run build && electron-builder install-app-deps",
-    "windows:build": "npm run build && electron-builder --win",
-    "windows:build-msi": "npm run build && electron-builder --win msi",
-    "dist": "npm run build && electron-builder",
-    "electron:build": "npm run build && electron-builder --win"
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend"
   },
-  "main": "electron/main.js",
   "devDependencies": {
-    "@types/react": "^19.1.12",
-    "@types/react-dom": "^19.1.9",
-    "electron": "^32.3.3",
-    "electron-builder": "^25.0.0"
-  },
-  "build": {
-    "appId": "com.astrasynergy.mathbud",
-    "productName": "数字芽算（MathBud）",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "math-question-generator/dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "mcp-server/",
-        "to": "mcp-server/",
-        "filter": [
-          "**/*",
-          "!**/*.pyc",
-          "!**/__pycache__"
-        ]
-      }
-    ],
-    "electronDownload": {
-      "mirror": "https://npmmirror.com/mirrors/electron/"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "msi",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "build/icon.ico",
-      "requestedExecutionLevel": "asInvoker"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "数字芽算（MathBud）"
-    },
-    "msi": {
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "icon": "build/icon.icns"
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "deb",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "build/icon.png"
-    }
-  },
-  "electronDownload": {
-    "mirror": "https://npmmirror.com/mirrors/electron/"
-  },
-  "dependencies": {
-    "@xterm/addon-fit": "^0.10.0",
-    "@xterm/xterm": "^5.5.0"
+    "concurrently": "^9.2.1"
   }
 }
+
